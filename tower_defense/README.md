@@ -9,3 +9,4 @@ Projeto de jogo Tower Defense desenvolvido em C++.
 - `tests/`: testes automatizados
 - `build/`: arquivos compilados
 - `assets/`: recursos do jogo
+- `design/`: cartões CRC e User Stories do projeto

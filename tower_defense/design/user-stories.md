@@ -24,7 +24,7 @@
 
 ## 3. Evolução das torres
 
-**Como jogador experiente**, quero evoluir minhas torres para aumentar sua eficiência durante as ondas mais difíceis.
+**Como jogador **, quero evoluir minhas torres para aumentar sua eficiência durante as ondas mais difíceis.
 
 ### Critérios de aceitação
 
@@ -59,7 +59,7 @@
 
 ## 6. Pontuação máxima
 
-**Como jogador recorrente**, quero salvar e consultar minha pontuação máxima para acompanhar meu melhor desempenho.
+**Como jogador **, quero salvar e consultar minha pontuação máxima para acompanhar meu melhor desempenho.
 
 ### Critérios de aceitação
 

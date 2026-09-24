@@ -2,7 +2,7 @@
 
 ## 1. Construção de torres
 
-**Como jogador **, quero construir uma torre em uma célula livre do mapa para começar a defender o caminho dos inimigos.
+**Como jogador**, quero construir uma torre em uma célula livre do mapa para começar a defender o caminho dos inimigos.
 
 ### Critérios de aceitação
 
@@ -13,7 +13,7 @@
 
 ## 2. Ataque das torres
 
-**Como jogador **, quero que minhas torres ataquem automaticamente os inimigos dentro do alcance para impedir que eles atravessem o caminho.
+**Como jogador**, quero que minhas torres ataquem automaticamente os inimigos dentro do alcance para impedir que eles atravessem o caminho.
 
 ### Critérios de aceitação
 
@@ -24,7 +24,7 @@
 
 ## 3. Evolução das torres
 
-**Como jogador **, quero evoluir minhas torres para aumentar sua eficiência durante as ondas mais difíceis.
+**Como jogador**, quero evoluir minhas torres para aumentar sua eficiência durante as ondas mais difíceis.
 
 ### Critérios de aceitação
 
@@ -47,7 +47,7 @@
 
 ## 5. Ondas de inimigos
 
-**Como jogador **, quero enfrentar ondas progressivamente mais difíceis para testar minhas estratégias de defesa.
+**Como jogador**, quero enfrentar ondas progressivamente mais difíceis para testar minhas estratégias de defesa.
 
 ### Critérios de aceitação
 
@@ -59,7 +59,7 @@
 
 ## 6. Pontuação máxima
 
-**Como jogador **, quero salvar e consultar minha pontuação máxima para acompanhar meu melhor desempenho.
+**Como jogador**, quero salvar e consultar minha pontuação máxima para acompanhar meu melhor desempenho.
 
 ### Critérios de aceitação
 

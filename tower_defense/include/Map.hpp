@@ -1,5 +1,5 @@
-#ifndef TOWER_DEFENSE_MAP_HPP
-#define TOWER_DEFENSE_MAP_HPP
+#ifndef MAP_HPP
+#define MAP_HPP
 
 #include <cstddef>
 #include <stdexcept>

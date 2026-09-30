@@ -12,7 +12,7 @@ derrotar os inimigos e sobreviver ao maior número possível de ondas.
 ## Integrantes
 
 - Sergio Amaral de Souza: 2026047310
-- Thiago Arthur:
-- Thiago Calebe:
-- Lucas Gabriel:
-- Vitor Paixão:
+- Thiago Arthur: 2026046020
+- Thiago Calebe: 2026047175
+- Lucas Gabriel: 2026047167
+- Vitor Paixão: 2026047370

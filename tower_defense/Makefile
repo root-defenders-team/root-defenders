@@ -5,9 +5,9 @@ CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Werror -g
 LDFLAGS :=
 
 BUILD_DIR := build
-MAP_TEST_RUNNER := $(BUILD_DIR)/map_tests
-MAP_TEST_SOURCES := tests/test_main.cpp tests/test_map.cpp
-MAP_SOURCE := $(wildcard src/Map.cpp)
+TEST_RUNNER := $(BUILD_DIR)/tests
+TEST_SOURCES := $(wildcard tests/test_*.cpp)
+SOURCE_FILES := $(filter-out src/main.cpp,$(wildcard src/*.cpp))
 
 ifeq ($(OS),Windows_NT)
 REMOVE_BUILD_DIR := cmd /C "if exist $(BUILD_DIR) rmdir /S /Q $(BUILD_DIR)"
@@ -22,25 +22,25 @@ endif
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-$(MAP_TEST_RUNNER): $(MAP_TEST_SOURCES) $(MAP_SOURCE) | $(BUILD_DIR)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(MAP_TEST_SOURCES) $(MAP_SOURCE) $(LDFLAGS) -o $@
+$(TEST_RUNNER): $(TEST_SOURCES) $(SOURCE_FILES) | $(BUILD_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(TEST_SOURCES) $(SOURCE_FILES) $(LDFLAGS) -o $@
 
-test: test-map
+test: $(TEST_RUNNER)
+	./$(TEST_RUNNER)
 
-test-map: $(MAP_TEST_RUNNER)
-	./$(MAP_TEST_RUNNER)
+test-map: test
 
 coverage: CXXFLAGS += --coverage -O0
 coverage: LDFLAGS += --coverage
-coverage: clean test-map
-	gcovr --root . --filter src/Map.cpp --fail-under-line 60
+coverage: clean test
+	gcovr --root . --filter src --exclude src/main.cpp --fail-under-line 60
 
 clean:
 	$(REMOVE_BUILD_DIR)
 	$(REMOVE_COVERAGE_DATA)
 
 help:
-	@echo "make test-map   Build and run Map unit tests"
-	@echo "make test       Alias for test-map"
-	@echo "make coverage   Run Map tests and require at least 60% line coverage"
-	@echo "make clean      Remove the Map test executable"
+	@echo "make test       Build and run all unit tests"
+	@echo "make test-map   Compatibility alias for make test"
+	@echo "make coverage   Run all tests and require at least 60% line coverage"
+	@echo "make clean      Remove generated test and coverage files"

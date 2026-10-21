@@ -27,7 +27,11 @@ public:
 	Projectile(const sf::Vector2f& startPosition, Enemy& target,
 		float speed, int damage);
 
-	/** @brief Atualiza a posição e detecta o impacto com o alvo. */
+	/**
+	 * @brief Move o projétil em direção ao alvo usando a velocidade configurada
+	 *        e detecta o impacto.
+	 * @param deltaTime Tempo decorrido desde a última atualização, em segundos.
+	 */
 	void update(float deltaTime);
 
 	/** @brief Desenha o projétil na janela principal da SFML. */

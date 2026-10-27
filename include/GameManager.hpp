@@ -1,30 +1,29 @@
-#ifndef GAMEMANAGER_HPP
-#define GAMEMANAGER_HPP
-
-#include <SFML/Graphics.hpp>
+#ifndef GAME_MANAGER_HPP
+#define GAME_MANAGER_HPP
 
 #include <cstddef>
 #include <memory>
-#include <string>
 #include <vector>
 
+#include "Cell.hpp"
 #include "Map.hpp"
+#include "TargetPriority.hpp"
+#include "Wave.hpp"
 
-class Tower;
 class Enemy;
 class Projectile;
+class Tower;
 
 /**
- * @brief Coordena o fluxo geral de uma partida de Tower Defense.
+ * @brief Aplica as regras de uma partida do ROOT DEFENSE.
  *
- * GameManager é o ponto central do jogo: executa o loop principal, inicia
- * partidas, controla as ondas de inimigos, administra o ouro do jogador,
- * atualiza torres, inimigos e projéteis, verifica as condições de vitória
- * e derrota e persiste a pontuação máxima em arquivo.
+ * O GameManager é dono das defesas, dos malwares e dos projéteis, controla a
+ * CPU, a pontuação, a integridade do /root e o andamento das ondas, e decide
+ * a vitória e a derrota.
  *
- * GameManager não é uma Entity: ele não possui posição nem é desenhado
- * diretamente, apenas gerencia os objetos que são.
- * A implementação dos métodos será definida posteriormente no arquivo .cpp.
+ * Ele não lê teclado, não desenha e não abre arquivo: o Shell conversa com o
+ * jogador, o TerminalRenderer desenha e o ScoreBoard guarda o ranking. Por
+ * isso pode ser testado inteiro com um mapa pequeno montado no próprio teste.
  */
 class GameManager {
 public:
@@ -32,175 +31,195 @@ public:
      * @brief Estados possíveis de uma partida.
      */
     enum class GameState {
-        Running, ///< Partida em andamento.
-        Victory, ///< Todas as ondas foram concluídas.
-        Defeat   ///< O limite de inimigos que atravessaram o caminho foi atingido.
+        Preparing,   ///< Início da partida ou fim de uma onda; o jogador prepara as defesas.
+        WaveRunning, ///< Uma onda está em andamento; o jogador só assiste.
+        Victory,     ///< A última onda terminou com integridade acima de 0.
+        Defeat       ///< A integridade do /root chegou a 0.
     };
 
-    /**
-     * @brief Cria o gerenciador do jogo e carrega a pontuação máxima.
-     *
-     * @param mapWidth Quantidade de colunas do mapa.
-     * @param mapHeight Quantidade de linhas do mapa.
-     * @param highScoreFile Caminho do arquivo de texto da pontuação máxima.
-     * @throws std::invalid_argument caso mapWidth ou mapHeight seja zero.
-     */
-    GameManager(std::size_t mapWidth, std::size_t mapHeight,
-        const std::string& highScoreFile);
+    static const int INITIAL_GOLD = 200;      ///< CPU no início da partida.
+    static const int INITIAL_INTEGRITY = 100; ///< Integridade do /root no início da partida.
 
     /**
-     * @brief Destrutor que libera as entidades gerenciadas.
+     * @brief Cria uma partida com o mapa e as ondas já carregados.
+     *
+     * @param map Mapa da fase; o GameManager guarda uma cópia.
+     * @param waves Ondas da partida, na ordem em que acontecem.
+     * @throws std::invalid_argument se o mapa não tiver caminho ou se não houver ondas.
+     */
+    GameManager(const Map& map, const std::vector<Wave>& waves);
+
+    /**
+     * @brief Libera as defesas, os malwares e os projéteis.
      *
      * Definido no .cpp, pois Tower, Enemy e Projectile são tipos incompletos
      * neste header.
      */
     ~GameManager();
 
-    /** @brief Cópia proibida: o GameManager é dono único dos recursos do jogo. */
+    /** @brief Cópia proibida: o GameManager é dono único das entidades. */
     GameManager(const GameManager&) = delete;
 
     /** @brief Atribuição por cópia proibida. */
     GameManager& operator=(const GameManager&) = delete;
 
     /**
-     * @brief Executa o loop principal do jogo.
+     * @brief Recomeça a partida do zero.
      *
-     * A cada ciclo processa eventos, atualiza o estado do jogo e renderiza
-     * a tela, até a janela ser fechada.
-     */
-    void run();
-
-    /**
-     * @brief Inicia uma nova partida.
-     *
-     * Reinicia ouro, pontuação, ondas e contadores, e remove todas as
-     * torres, inimigos e projéteis existentes.
+     * Remove os malwares primeiro (eles apontam para o caminho do mapa), depois
+     * os projéteis e as defesas, libera as células e volta CPU, integridade,
+     * pontos e ondas aos valores iniciais.
      */
     void startNewGame();
 
     /**
-     * @brief Atualiza torres, inimigos e projéteis.
-     * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
-     */
-    void update(float deltaTime);
-
-    /**
-     * @brief Desenha o mapa e todas as entidades ativas.
-     * @param window Referência para a janela principal da SFML.
-     */
-    void render(sf::RenderWindow& window);
-
-    /**
-     * @brief Inicia a próxima onda de inimigos.
-     *
-     * A dificuldade aumenta progressivamente a cada onda.
-     *
-     * @return false se todas as ondas já tiverem sido iniciadas.
+     * @brief Inicia a próxima onda.
+     * @return false se já há uma onda rodando ou se as ondas acabaram.
      */
     bool startNextWave();
 
     /**
-     * @brief Verifica se a onda atual foi concluída.
-     * @return true quando não há inimigos ativos nem pendentes na onda.
+     * @brief Avança a simulação em um tick.
+     *
+     * Segue a ordem fixa das regras do jogo: nascimentos, movimento dos
+     * malwares, dano ao /root, ataque das defesas, projéteis, recompensas,
+     * remoção e atualização do estado.
+     *
+     * @param deltaTime Tempo do tick, em segundos (0,1 no jogo).
      */
-    [[nodiscard]] bool isWaveFinished() const noexcept;
-
-    /** @brief Retorna o número da onda atual (começando em 1). */
-    [[nodiscard]] std::size_t currentWave() const noexcept;
+    void update(float deltaTime);
 
     /**
-     * @brief Adiciona um inimigo à partida.
-     * @param enemy Inimigo criado; o GameManager assume sua posse.
+     * @brief Coloca um malware na partida.
+     * @param enemy Malware criado; o GameManager assume a posse.
      */
     void spawnEnemy(std::unique_ptr<Enemy> enemy);
 
     /**
-     * @brief Remove inimigos e projéteis que não estão mais ativos.
+     * @brief Apaga os projéteis e os malwares que ficaram inativos.
+     *
+     * Antes de apagar, desativa todo projétil cujo alvo esteja inativo, para
+     * que nenhum projétil acesse um malware já apagado.
      */
     void removeInactiveEntities();
 
     /**
-     * @brief Constrói uma torre em uma célula do mapa.
+     * @brief Instala uma defesa na célula guardada nela.
      *
-     * @param tower Torre a ser construída; o GameManager assume sua posse.
-     * @param x Coordenada horizontal da célula.
-     * @param y Coordenada vertical da célula.
-     * @return false se a célula for inválida, estiver ocupada ou se o
-     *         jogador não tiver ouro suficiente.
+     * @param tower Defesa a instalar; o GameManager assume a posse.
+     * @return false se a defesa for nula, a célula não aceitar construção,
+     *         estiver ocupada ou não houver CPU suficiente.
      */
-    bool buildTower(std::unique_ptr<Tower> tower, int x, int y);
-
-    /** @brief Retorna a quantidade de ouro atual do jogador. */
-    [[nodiscard]] int gold() const noexcept;
+    bool buildTower(std::unique_ptr<Tower> tower);
 
     /**
-     * @brief Adiciona ouro ao jogador (ex.: recompensa por inimigo derrotado).
-     * @param amount Quantidade de ouro a adicionar.
+     * @brief Evolui a defesa de uma célula em um nível.
+     * @param cell Célula da defesa.
+     * @return false se não houver defesa, ela já estiver no nível máximo ou faltar CPU.
      */
-    void addGold(int amount) noexcept;
+    bool upgradeTower(const Cell& cell);
 
     /**
-     * @brief Tenta descontar ouro do jogador.
-     * @param amount Quantidade de ouro a gastar.
-     * @return true se havia ouro suficiente e o valor foi descontado.
+     * @brief Remove a defesa de uma célula e devolve 50% do que foi gasto nela.
+     * @param cell Célula da defesa.
+     * @return false se não houver defesa na célula.
      */
-    bool spendGold(int amount) noexcept;
+    bool sellTower(const Cell& cell);
 
     /**
-     * @brief Registra que um inimigo completou o caminho.
+     * @brief Muda a prioridade de alvo da defesa de uma célula.
+     * @param cell Célula da defesa.
+     * @param priority Nova prioridade de alvo.
+     * @return false se não houver defesa na célula.
      */
-    void registerEnemyLeak() noexcept;
-
-    /** @brief Retorna quantos inimigos atravessaram o caminho. */
-    [[nodiscard]] int enemiesLeaked() const noexcept;
+    bool setTargetPriority(const Cell& cell, TargetPriority priority);
 
     /**
-     * @brief Verifica as condições de vitória e derrota e atualiza o estado.
+     * @brief Procura a defesa instalada em uma célula.
+     * @param cell Célula procurada.
+     * @return A defesa, ou nullptr se não houver nenhuma.
      */
-    void updateGameState() noexcept;
+    const Tower* getTowerAt(const Cell& cell) const;
+
+    /** @brief Retorna a CPU disponível. */
+    int getGold() const;
+
+    /**
+     * @brief Soma CPU ao jogador.
+     * @param amount Quantidade a somar.
+     * @throws std::invalid_argument se amount for negativo.
+     */
+    void addGold(int amount);
+
+    /**
+     * @brief Tenta gastar CPU.
+     * @param amount Quantidade a gastar.
+     * @return false se amount for negativo ou maior que a CPU disponível.
+     */
+    bool spendGold(int amount);
+
+    /**
+     * @brief Tira integridade do /root; ela nunca fica abaixo de 0.
+     * @param amount Dano causado ao /root.
+     */
+    void damageRoot(int amount);
+
+    /** @brief Retorna a integridade atual do /root. */
+    int getRootIntegrity() const;
+
+    /** @brief Retorna a pontuação da partida. */
+    int getScore() const;
+
+    /** @brief Retorna o número da onda atual (0 antes da primeira). */
+    std::size_t getCurrentWave() const;
+
+    /** @brief Retorna quantas ondas a partida tem. */
+    std::size_t getTotalWaves() const;
+
+    /**
+     * @brief Diz se a onda atual terminou.
+     * @return true quando a onda já soltou todos os malwares e não há nenhum ativo.
+     */
+    bool isWaveFinished() const;
 
     /** @brief Retorna o estado atual da partida. */
-    [[nodiscard]] GameState state() const noexcept;
+    GameState getState() const;
 
-    /** @brief Retorna a pontuação da partida atual. */
-    [[nodiscard]] int score() const noexcept;
+    /** @brief Retorna o mapa da partida. */
+    const Map& getMap() const;
 
-    /** @brief Retorna a pontuação máxima registrada. */
-    [[nodiscard]] int highScore() const noexcept;
+    /** @brief Retorna as defesas instaladas. */
+    const std::vector<std::unique_ptr<Tower> >& getTowers() const;
 
-    /**
-     * @brief Lê a pontuação máxima do arquivo de texto.
-     *
-     * Caso o arquivo não exista, a pontuação máxima é considerada zero.
-     */
-    void loadHighScore();
+    /** @brief Retorna os malwares em jogo. */
+    const std::vector<std::unique_ptr<Enemy> >& getEnemies() const;
 
-    /**
-     * @brief Salva a pontuação máxima no arquivo de texto.
-     *
-     * O recorde só é substituído se a pontuação atual for maior.
-     */
-    void saveHighScore();
+    /** @brief Retorna os projéteis em voo. */
+    const std::vector<std::unique_ptr<Projectile> >& getProjectiles() const;
 
 private:
-    /** @brief Trata os eventos da janela (fechar, cliques, teclas). */
-    void processEvents();
+    /**
+     * @brief Procura a defesa de uma célula, permitindo alterá-la.
+     * @param cell Célula procurada.
+     * @return A defesa, ou nullptr se não houver nenhuma.
+     */
+    Tower* findTower(const Cell& cell) const;
 
-    sf::RenderWindow window_;                          ///< Janela principal do jogo.
-    Map map_;                                          ///< Cenário e rota dos inimigos.
-    std::vector<std::unique_ptr<Tower>> towers_;       ///< Torres construídas.
-    std::vector<std::unique_ptr<Enemy>> enemies_;      ///< Inimigos em jogo.
-    std::vector<std::unique_ptr<Projectile>> projectiles_; ///< Projéteis em voo.
+    /**
+     * @brief Confere fim de onda, vitória e derrota e muda o estado.
+     */
+    void updateGameState();
 
-    int gold_;                  ///< Ouro disponível para o jogador.
-    int enemiesLeaked_;         ///< Inimigos que atravessaram o caminho.
-    int maxEnemiesLeaked_;      ///< Limite de inimigos antes da derrota.
-    std::size_t currentWave_;   ///< Número da onda atual.
-    std::size_t totalWaves_;    ///< Total de ondas da partida.
-    int score_;                 ///< Pontuação da partida atual.
-    int highScore_;             ///< Maior pontuação já registrada.
-    std::string highScoreFile_; ///< Caminho do arquivo da pontuação máxima.
-    GameState state_;           ///< Estado atual da partida.
+    Map map;                                               ///< Mapa da fase.
+    std::vector<Wave> waves;                               ///< Ondas da partida.
+    std::vector<std::unique_ptr<Tower> > towers;           ///< Defesas instaladas.
+    std::vector<std::unique_ptr<Enemy> > enemies;          ///< Malwares em jogo.
+    std::vector<std::unique_ptr<Projectile> > projectiles; ///< Projéteis em voo.
+    int gold;                                              ///< CPU disponível.
+    int rootIntegrity;                                     ///< Integridade do /root.
+    int score;                                             ///< Pontuação da partida.
+    std::size_t currentWave;                               ///< Onda atual (0 antes da primeira).
+    GameState state;                                       ///< Estado da partida.
 };
 
-#endif // GAMEMANAGER_HPP
+#endif // GAME_MANAGER_HPP

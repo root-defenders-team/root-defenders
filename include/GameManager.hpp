@@ -178,7 +178,8 @@ public:
 
     /**
      * @brief Diz se a onda atual terminou.
-     * @return true quando a onda já soltou todos os malwares e não há nenhum ativo.
+     * @return true quando a onda já soltou todos os malwares e não há nenhum ativo,
+     *         ou quando nenhuma onda começou ainda.
      */
     bool isWaveFinished() const;
 

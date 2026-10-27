@@ -152,6 +152,30 @@ TEST_CASE("does not start a wave while another is running") {
     CHECK(game.getCurrentWave() == 1);
 }
 
+TEST_CASE("no wave is unfinished before the first one starts") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    CHECK(game.isWaveFinished());
+}
+
+TEST_CASE("a wave is not finished right after it starts") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    REQUIRE(game.startNextWave());
+    CHECK_FALSE(game.isWaveFinished());
+}
+
+TEST_CASE("startNewGame lets the first wave start again") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
+    REQUIRE(game.startNextWave());
+
+    game.startNewGame();
+
+    CHECK(game.startNextWave());
+    CHECK(game.getCurrentWave() == 1);
+    CHECK(game.getState() == GameManager::GameState::WaveRunning);
+}
+
 TEST_CASE("startNewGame restores the initial values") {
     GameManager game(makeTestMap(), makeTestWaves(2));
     game.spendGold(100);

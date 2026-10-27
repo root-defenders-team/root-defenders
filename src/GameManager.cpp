@@ -6,6 +6,15 @@
 #include "Projectile.hpp"
 #include "Tower.hpp"
 
+namespace {
+
+const int WAVE_BONUS_BASE = 20;      ///< CPU fixa ao concluir uma onda.
+const int WAVE_BONUS_PER_WAVE = 5;   ///< CPU extra por número da onda concluída.
+const int WAVE_SCORE = 100;          ///< Pontos ao concluir uma onda.
+const int VICTORY_SCORE_FACTOR = 10; ///< Pontos por ponto de integridade na vitória.
+
+} // namespace
+
 const int GameManager::INITIAL_GOLD;
 const int GameManager::INITIAL_INTEGRITY;
 
@@ -26,6 +35,36 @@ GameManager::GameManager(const Map& map, const std::vector<Wave>& waves)
 }
 
 GameManager::~GameManager() {
+}
+
+void GameManager::startNewGame() {
+    // Os malwares saem primeiro: eles guardam uma referência para o caminho do mapa.
+    enemies.clear();
+    projectiles.clear();
+    for (std::size_t i = 0; i < towers.size(); ++i) {
+        map.releaseCell(towers[i]->getCell());
+    }
+    towers.clear();
+
+    for (std::size_t i = 0; i < waves.size(); ++i) {
+        waves[i].reset();
+    }
+
+    gold = INITIAL_GOLD;
+    rootIntegrity = INITIAL_INTEGRITY;
+    score = 0;
+    currentWave = 0;
+    state = GameState::Preparing;
+}
+
+bool GameManager::startNextWave() {
+    if (state != GameState::Preparing || currentWave >= waves.size()) {
+        return false;
+    }
+    waves[currentWave].reset();
+    ++currentWave;
+    state = GameState::WaveRunning;
+    return true;
 }
 
 int GameManager::getGold() const {
@@ -73,6 +112,21 @@ std::size_t GameManager::getTotalWaves() const {
     return waves.size();
 }
 
+bool GameManager::isWaveFinished() const {
+    if (currentWave == 0) {
+        return true;
+    }
+    if (!waves[currentWave - 1].isFinishedSpawning()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < enemies.size(); ++i) {
+        if (enemies[i]->isActive()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 GameManager::GameState GameManager::getState() const {
     return state;
 }
@@ -91,4 +145,27 @@ const std::vector<std::unique_ptr<Enemy> >& GameManager::getEnemies() const {
 
 const std::vector<std::unique_ptr<Projectile> >& GameManager::getProjectiles() const {
     return projectiles;
+}
+
+void GameManager::updateGameState() {
+    if (state != GameState::WaveRunning) {
+        return;
+    }
+    if (rootIntegrity == 0) {
+        state = GameState::Defeat;
+        return;
+    }
+    if (!isWaveFinished()) {
+        return;
+    }
+
+    gold += WAVE_BONUS_BASE + WAVE_BONUS_PER_WAVE * static_cast<int>(currentWave);
+    score += WAVE_SCORE;
+
+    if (currentWave == waves.size()) {
+        score += rootIntegrity * VICTORY_SCORE_FACTOR;
+        state = GameState::Victory;
+    } else {
+        state = GameState::Preparing;
+    }
 }

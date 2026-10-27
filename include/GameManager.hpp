@@ -160,7 +160,7 @@ public:
 
     /**
      * @brief Tira integridade do /root; ela nunca fica abaixo de 0.
-     * @param amount Dano causado ao /root.
+     * @param amount Dano causado ao /root; valores menores ou iguais a 0 são ignorados.
      */
     void damageRoot(int amount);
 
@@ -178,7 +178,8 @@ public:
 
     /**
      * @brief Diz se a onda atual terminou.
-     * @return true quando a onda já soltou todos os malwares e não há nenhum ativo.
+     * @return true quando a onda já soltou todos os malwares e não há nenhum ativo,
+     *         ou quando nenhuma onda começou ainda.
      */
     bool isWaveFinished() const;
 

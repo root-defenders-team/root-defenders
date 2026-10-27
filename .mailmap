@@ -1,0 +1,17 @@
+# Junta as identidades de cada integrante na identidade do Moodle.
+# Formato: Nome <email do Moodle> <outro email usado nos commits>
+# Confira com: git shortlog -sne
+
+Lucas Gabriel Oliveira Barbosa <lgob16@ufmg.br> <16.elige@gmail.com>
+Lucas Gabriel Oliveira Barbosa <lgob16@ufmg.br> <lucaspdjl@gmail.com>
+
+Sergio Amaral de Souza <sas2023@ufmg.br> <sergioamaraldesouza@gmail.com>
+Sergio Amaral de Souza <sas2023@ufmg.br> <161513483+sergioasouza@users.noreply.github.com>
+Sergio Amaral de Souza <sas2023@ufmg.br> <sas2023@ufmg.br>
+
+Thiago Arthur Almeida Pinto <guinhoal@ufmg.br> <thiagodevprof@gmail.com>
+Thiago Arthur Almeida Pinto <guinhoal@ufmg.br> <121466376+Guinhoal@users.noreply.github.com>
+
+Thiago Calebe <tcalebe10@ufmg.br> <tcalebe10@gmail.com>
+
+Vitor Paixão <vitorpd@ufmg.br> <paixaodamasceno@gmail.com>

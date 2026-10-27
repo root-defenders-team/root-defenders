@@ -1,377 +1,181 @@
 #include <doctest/doctest.h>
 
-#include <filesystem>
-#include <fstream>
-#include <memory>
 #include <stdexcept>
-#include <string>
-#include <system_error>
 #include <vector>
 
-#include "Enemy.hpp"
+#include "Cell.hpp"
+#include "CellType.hpp"
+#include "EnemyType.hpp"
 #include "GameManager.hpp"
-#include "Projectile.hpp"
-#include "Tower.hpp"
+#include "Map.hpp"
+#include "SpawnGroup.hpp"
+#include "Wave.hpp"
 
 namespace {
 
-class FakeTower : public Tower {
-public:
-    explicit FakeTower(int cost)
-        : Tower(0.0f, 0.0f, 1.0f, 1.0f, 2.0f, 10.0f, 1.0f, cost) {}
-
-    void update(float) override {}
-
-    void render(sf::RenderWindow&) override {}
-
-    void attack(std::vector<Enemy*>&, std::vector<Projectile*>&, float) override {}
-};
-
-class FakeEnemy : public Enemy {
-public:
-    FakeEnemy(float hp, int goldReward)
-        : Enemy(0.0f, 0.0f, 1.0f, 1.0f, hp, 1.0f, goldReward) {}
-
-    void update(float) override {}
-
-    void render(sf::RenderWindow&) override {}
-};
-
-class GameManagerTest {
-protected:
-    static constexpr std::size_t kWidth = 10;
-    static constexpr std::size_t kHeight = 8;
-
-    GameManagerTest()
-        : highScorePath_(std::filesystem::temp_directory_path()
-              / "tower_defense_game_manager_test_highscore.txt") {
-        removeHighScoreFile();
+/// Mapa 5x3 com o caminho na linha do meio, da coluna 0 até a coluna 4.
+Map makeTestMap() {
+    Map map(5, 3);
+    for (int x = 0; x < 5; ++x) {
+        Cell cell = {x, 1};
+        map.setCellType(cell, CellType::Path);
+        map.addWaypoint(cell);
     }
-
-    ~GameManagerTest() {
-        removeHighScoreFile();
-    }
-
-    GameManagerTest(const GameManagerTest&) = delete;
-    GameManagerTest& operator=(const GameManagerTest&) = delete;
-
-    std::string highScorePath() const {
-        return highScorePath_.string();
-    }
-
-    void writeHighScoreFile(const std::string& content) const {
-        std::ofstream file(highScorePath_);
-        file << content;
-    }
-
-    int readHighScoreFile() const {
-        std::ifstream file(highScorePath_);
-        int value = -1;
-        file >> value;
-        return value;
-    }
-
-    static FakeEnemy* spawnFakeEnemy(GameManager& game, float hp, int goldReward) {
-        auto enemy = std::make_unique<FakeEnemy>(hp, goldReward);
-        FakeEnemy* raw = enemy.get();
-        game.spawnEnemy(std::move(enemy));
-        return raw;
-    }
-
-    static void defeatEnemy(GameManager& game, FakeEnemy& enemy) {
-        enemy.takeDamage(1000.0f);
-        game.update(0.0f);
-        game.removeInactiveEntities();
-    }
-
-private:
-    void removeHighScoreFile() const {
-        std::error_code error;
-        std::filesystem::remove(highScorePath_, error);
-    }
-
-    std::filesystem::path highScorePath_;
-};
-
+    return map;
 }
+
+/// Cria a quantidade pedida de ondas, cada uma com um único Virus.
+std::vector<Wave> makeTestWaves(int count) {
+    std::vector<Wave> waves;
+    for (int i = 0; i < count; ++i) {
+        std::vector<SpawnGroup> groups;
+        SpawnGroup group = {EnemyType::Virus, 1, 0.0f};
+        groups.push_back(group);
+        waves.push_back(Wave(groups));
+    }
+    return waves;
+}
+
+} // namespace
 
 TEST_SUITE("GameManager") {
 
-TEST_CASE_FIXTURE(GameManagerTest, "rejects maps without positive dimensions") {
-    CHECK_THROWS_AS(GameManager(0, kHeight, highScorePath()), std::invalid_argument);
-    CHECK_THROWS_AS(GameManager(kWidth, 0, highScorePath()), std::invalid_argument);
-    CHECK_THROWS_AS(GameManager(0, 0, highScorePath()), std::invalid_argument);
+TEST_CASE("rejects a map without path") {
+    Map emptyMap(5, 3);
+    CHECK_THROWS_AS(GameManager(emptyMap, makeTestWaves(1)), std::invalid_argument);
 
-    CHECK_NOTHROW(GameManager(1, 1, highScorePath()));
+    Map onePointMap(5, 3);
+    Cell cell = {0, 1};
+    onePointMap.addWaypoint(cell);
+    CHECK_THROWS_AS(GameManager(onePointMap, makeTestWaves(1)), std::invalid_argument);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "starts a running game with initial resources") {
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    CHECK(game.state() == GameManager::GameState::Running);
-    CHECK(game.gold() > 0);
-    CHECK(game.score() == 0);
-    CHECK(game.enemiesLeaked() == 0);
-    CHECK(game.isWaveFinished());
+TEST_CASE("rejects an empty list of waves") {
+    std::vector<Wave> noWaves;
+    CHECK_THROWS_AS(GameManager(makeTestMap(), noWaves), std::invalid_argument);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "adds gold to the player") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
+TEST_CASE("accepts a valid map and waves") {
+    CHECK_NOTHROW(GameManager(makeTestMap(), makeTestWaves(1)));
+}
+
+TEST_CASE("starts with the initial values") {
+    GameManager game(makeTestMap(), makeTestWaves(3));
+
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+    CHECK(game.getRootIntegrity() == GameManager::INITIAL_INTEGRITY);
+    CHECK(game.getScore() == 0);
+    CHECK(game.getCurrentWave() == 0);
+    CHECK(game.getTotalWaves() == 3);
+    CHECK(game.getState() == GameManager::GameState::Preparing);
+    CHECK(game.getTowers().empty());
+    CHECK(game.getEnemies().empty());
+    CHECK(game.getProjectiles().empty());
+}
+
+TEST_CASE("keeps a copy of the map") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    CHECK(game.getMap().getWidth() == 5);
+    CHECK(game.getMap().getHeight() == 3);
+    CHECK(game.getMap().hasPath());
+}
+
+TEST_CASE("adds gold") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
 
     game.addGold(50);
-    CHECK(game.gold() == initialGold + 50);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD + 50);
 
     game.addGold(0);
-    CHECK(game.gold() == initialGold + 50);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD + 50);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "spends gold only when the player can afford it") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
+TEST_CASE("rejects adding a negative amount of gold") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
 
-    CHECK_FALSE(game.spendGold(initialGold + 1));
-    CHECK(game.gold() == initialGold);
-
-    CHECK(game.spendGold(initialGold));
-    CHECK(game.gold() == 0);
-
-    CHECK_FALSE(game.spendGold(1));
-    CHECK(game.gold() == 0);
+    CHECK_THROWS_AS(game.addGold(-1), std::invalid_argument);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "rejects negative gold spending") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
+TEST_CASE("spends gold when there is enough") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    CHECK(game.spendGold(80));
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD - 80);
+
+    CHECK(game.spendGold(GameManager::INITIAL_GOLD - 80));
+    CHECK(game.getGold() == 0);
+}
+
+TEST_CASE("does not spend more gold than available") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    CHECK_FALSE(game.spendGold(GameManager::INITIAL_GOLD + 1));
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+}
+
+TEST_CASE("does not spend a negative amount of gold") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
 
     CHECK_FALSE(game.spendGold(-10));
-    CHECK(game.gold() == initialGold);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "builds a tower on a free cell and charges its cost") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
-    const int cost = initialGold / 2;
+TEST_CASE("damages the root") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
 
-    CHECK(game.buildTower(std::make_unique<FakeTower>(cost), 2, 3));
-    CHECK(game.gold() == initialGold - cost);
+    game.damageRoot(30);
+    CHECK(game.getRootIntegrity() == GameManager::INITIAL_INTEGRITY - 30);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "does not build a tower on an occupied cell") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    game.addGold(100);
+TEST_CASE("root integrity never goes below zero") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
 
-    REQUIRE(game.buildTower(std::make_unique<FakeTower>(10), 4, 4));
-    const int goldAfterFirstTower = game.gold();
-
-    CHECK_FALSE(game.buildTower(std::make_unique<FakeTower>(10), 4, 4));
-    CHECK(game.gold() == goldAfterFirstTower);
+    game.damageRoot(GameManager::INITIAL_INTEGRITY + 50);
+    CHECK(game.getRootIntegrity() == 0);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "does not build a tower outside the map") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
-    const int width = static_cast<int>(kWidth);
-    const int height = static_cast<int>(kHeight);
-
-    CHECK_FALSE(game.buildTower(std::make_unique<FakeTower>(1), -1, 0));
-    CHECK_FALSE(game.buildTower(std::make_unique<FakeTower>(1), 0, -1));
-    CHECK_FALSE(game.buildTower(std::make_unique<FakeTower>(1), width, 0));
-    CHECK_FALSE(game.buildTower(std::make_unique<FakeTower>(1), 0, height));
-    CHECK(game.gold() == initialGold);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "does not build a tower without enough gold") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
-
-    CHECK_FALSE(game.buildTower(std::make_unique<FakeTower>(initialGold + 1), 1, 1));
-    CHECK(game.gold() == initialGold);
-
-    CHECK(game.buildTower(std::make_unique<FakeTower>(initialGold), 1, 1));
-    CHECK(game.gold() == 0);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "does not build a null tower") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
-
-    CHECK_FALSE(game.buildTower(nullptr, 1, 1));
-    CHECK(game.gold() == initialGold);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "starts the first wave and creates its enemies") {
-    GameManager game(kWidth, kHeight, highScorePath());
+TEST_CASE("starts the first wave") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
 
     CHECK(game.startNextWave());
-    CHECK(game.currentWave() == 1);
-    CHECK_FALSE(game.isWaveFinished());
+    CHECK(game.getCurrentWave() == 1);
+    CHECK(game.getState() == GameManager::GameState::WaveRunning);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "keeps the wave unfinished while an enemy is active") {
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    FakeEnemy* enemy = spawnFakeEnemy(game, 50.0f, 5);
-    CHECK_FALSE(game.isWaveFinished());
-
-    game.removeInactiveEntities();
-    CHECK_FALSE(game.isWaveFinished());
-
-    enemy->setActive(false);
-    game.removeInactiveEntities();
-    CHECK(game.isWaveFinished());
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "rewards gold and score when an enemy is defeated") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
-
-    FakeEnemy* enemy = spawnFakeEnemy(game, 10.0f, 25);
-    defeatEnemy(game, *enemy);
-
-    CHECK(game.gold() == initialGold + 25);
-    CHECK(game.score() > 0);
-    CHECK(game.isWaveFinished());
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "updates without entities keep the game unchanged") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
-
-    game.update(0.016f);
-
-    CHECK(game.state() == GameManager::GameState::Running);
-    CHECK(game.gold() == initialGold);
-    CHECK(game.score() == 0);
-    CHECK(game.enemiesLeaked() == 0);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "counts enemies that leaked through the path") {
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    game.registerEnemyLeak();
-    CHECK(game.enemiesLeaked() == 1);
-
-    game.registerEnemyLeak();
-    CHECK(game.enemiesLeaked() == 2);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "keeps running while no enemy has leaked") {
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    game.updateGameState();
-
-    CHECK(game.state() == GameManager::GameState::Running);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "is not won while waves remain") {
-    GameManager game(kWidth, kHeight, highScorePath());
+TEST_CASE("does not start a wave while another is running") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
 
     REQUIRE(game.startNextWave());
-    game.updateGameState();
-
-    CHECK(game.state() != GameManager::GameState::Victory);
+    CHECK_FALSE(game.startNextWave());
+    CHECK(game.getCurrentWave() == 1);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "ends in defeat when the leak limit is reached") {
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    for (int i = 0; i < 1000 && game.state() == GameManager::GameState::Running; ++i) {
-        game.registerEnemyLeak();
-        game.updateGameState();
-    }
-
-    CHECK(game.state() == GameManager::GameState::Defeat);
-    CHECK(game.enemiesLeaked() > 0);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "starting a new game resets the match") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    const int initialGold = game.gold();
-
-    game.addGold(100);
-    REQUIRE(game.buildTower(std::make_unique<FakeTower>(10), 0, 0));
-    spawnFakeEnemy(game, 10.0f, 5);
-    game.registerEnemyLeak();
+TEST_CASE("startNewGame restores the initial values") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
+    game.spendGold(100);
+    game.damageRoot(40);
     game.startNextWave();
 
     game.startNewGame();
 
-    CHECK(game.state() == GameManager::GameState::Running);
-    CHECK(game.gold() == initialGold);
-    CHECK(game.score() == 0);
-    CHECK(game.enemiesLeaked() == 0);
-    CHECK(game.isWaveFinished());
-    CHECK(game.buildTower(std::make_unique<FakeTower>(1), 0, 0));
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+    CHECK(game.getRootIntegrity() == GameManager::INITIAL_INTEGRITY);
+    CHECK(game.getScore() == 0);
+    CHECK(game.getCurrentWave() == 0);
+    CHECK(game.getState() == GameManager::GameState::Preparing);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "starting a new game recovers from a defeat") {
-    GameManager game(kWidth, kHeight, highScorePath());
+TEST_CASE("has no tower on an empty cell") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
 
-    for (int i = 0; i < 1000 && game.state() == GameManager::GameState::Running; ++i) {
-        game.registerEnemyLeak();
-        game.updateGameState();
-    }
-    REQUIRE(game.state() == GameManager::GameState::Defeat);
-
-    game.startNewGame();
-
-    CHECK(game.state() == GameManager::GameState::Running);
-    CHECK(game.enemiesLeaked() == 0);
+    CHECK(game.getTowerAt(cell) == nullptr);
+    CHECK_FALSE(game.upgradeTower(cell));
+    CHECK_FALSE(game.sellTower(cell));
+    CHECK_FALSE(game.setTargetPriority(cell, TargetPriority::Strongest));
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
 }
 
-TEST_CASE_FIXTURE(GameManagerTest, "starts with zero high score when the file does not exist") {
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    CHECK(game.highScore() == 0);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "loads the high score from the file on construction") {
-    writeHighScoreFile("150");
-
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    CHECK(game.highScore() == 150);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "reloads the high score after the file changes") {
-    GameManager game(kWidth, kHeight, highScorePath());
-    REQUIRE(game.highScore() == 0);
-
-    writeHighScoreFile("320");
-    game.loadHighScore();
-
-    CHECK(game.highScore() == 320);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "does not replace a higher record when saving") {
-    writeHighScoreFile("500");
-    GameManager game(kWidth, kHeight, highScorePath());
-
-    game.saveHighScore();
-
-    CHECK(game.highScore() == 500);
-    CHECK(readHighScoreFile() == 500);
-}
-
-TEST_CASE_FIXTURE(GameManagerTest, "saves a new record that survives a new execution") {
-    int recordScore = 0;
-    {
-        GameManager game(kWidth, kHeight, highScorePath());
-        FakeEnemy* enemy = spawnFakeEnemy(game, 10.0f, 25);
-        defeatEnemy(game, *enemy);
-        recordScore = game.score();
-        REQUIRE(recordScore > 0);
-
-        game.saveHighScore();
-
-        CHECK(game.highScore() == recordScore);
-        CHECK(readHighScoreFile() == recordScore);
-    }
-
-    GameManager nextExecution(kWidth, kHeight, highScorePath());
-
-    CHECK(nextExecution.highScore() == recordScore);
-}
-
-}
+} // TEST_SUITE("GameManager")

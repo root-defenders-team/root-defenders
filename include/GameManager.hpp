@@ -160,7 +160,7 @@ public:
 
     /**
      * @brief Tira integridade do /root; ela nunca fica abaixo de 0.
-     * @param amount Dano causado ao /root.
+     * @param amount Dano causado ao /root; valores menores ou iguais a 0 são ignorados.
      */
     void damageRoot(int amount);
 

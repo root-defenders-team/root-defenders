@@ -1,10 +1,11 @@
-#ifndef TOWER_HPP
+﻿#ifndef TOWER_HPP
 #define TOWER_HPP
 
 #include "Entity.hpp"
-#include "Enemy.hpp"
-#include "Projectile.hpp"
 #include <vector>
+
+class Enemy;
+class Projectile;
 
 /**
  * @brief Classe abstrata base para todas as torres defensivas do jogo.
@@ -44,8 +45,7 @@ public:
     /**
      * @brief Método virtual puro para o ataque polimórfico.
      * 
-     * Cada tipo específico de torre (ex: Arqueiro, Canhão, Mago) implementará 
-     * sua própria lógica de escolha de alvo e criação de projéteis.
+     * Cada tipo específico de torre implementará sua própria lógica de escolha de alvo.
      * 
      * @param enemies Referência para o vetor de inimigos ativos no mapa.
      * @param projectiles Referência para o vetor de projéteis ativos no jogo.
@@ -63,6 +63,7 @@ public:
     float getDamage() const;
     int getCost() const;
     int getLevel() const;
+    float getFireRate() const;
 };
 
 #endif // TOWER_HPP

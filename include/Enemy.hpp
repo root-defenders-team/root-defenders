@@ -1,8 +1,10 @@
-#ifndef ENEMY_HPP
+﻿#ifndef ENEMY_HPP
 #define ENEMY_HPP
 
 #include "Entity.hpp"
+#include "Vector2.hpp"
 #include <vector>
+#include <cstddef>
 
 /**
  * @brief Classe abstrata base para todos os inimigos do jogo.
@@ -12,11 +14,11 @@
  */
 class Enemy : public Entity {
 protected:
-    float _hp;            ///< Pontos de vida atuais do inimigo.
-    float _maxHp;         ///< Pontos de vida máximos.
-    float _speed;         ///< Velocidade de deslocamento no mapa.
-    int _goldReward;      ///< Recompensa em ouro concedida ao ser derrotado.
-    size_t _waypointIndex; ///< Índice atual do waypoint que o inimigo está perseguindo.
+    float _hp;             ///< Pontos de vida atuais do inimigo.
+    float _maxHp;          ///< Pontos de vida máximos.
+    float _speed;          ///< Velocidade de deslocamento no mapa.
+    int _goldReward;       ///< Recompensa em ouro concedida ao ser derrotado.
+    std::size_t _waypointIndex; ///< Índice atual do waypoint que o inimigo está perseguindo.
 
 public:
     /**
@@ -44,12 +46,6 @@ public:
     virtual void update(float deltaTime) override = 0;
 
     /**
-     * @brief Renderiza o inimigo na janela do jogo.
-     * @param window Referência para a janela da SFML.
-     */
-    virtual void render(sf::RenderWindow& window) override = 0;
-
-    /**
      * @brief Aplica dano ao inimigo (reduz seu HP).
      * @param amount Quantidade de dano recebido.
      */
@@ -68,11 +64,21 @@ public:
     int getGoldReward() const;
 
     /**
+     * @brief Obtém os pontos de vida atuais.
+     */
+    float getHp() const;
+
+    /**
+     * @brief Obtém a velocidade de movimento.
+     */
+    float getSpeed() const;
+
+    /**
      * @brief Verifica se o inimigo chegou ao final da rota de waypoints.
      * @param waypoints Lista de posições que formam o caminho.
      * @return true se atingiu o destino final.
      */
-    bool hasReachedEnd(const std::vector<sf::Vector2f>& waypoints) const;
+    bool hasReachedEnd(const std::vector<Vector2>& waypoints) const;
 };
 
 #endif // ENEMY_HPP

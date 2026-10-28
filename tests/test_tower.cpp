@@ -1,14 +1,13 @@
-#include "../include/doctest.h"
-#include "../include/Tower.hpp"
+﻿#include <doctest/doctest.h>
+#include "Tower.hpp"
 
 class TorreTeste : public Tower {
 public:
     TorreTeste(float x, float y, float w, float h, float range, float dmg, float rate, int cost)
         : Tower(x, y, w, h, range, dmg, rate, cost) {}
 
-    void update(float deltaTime) override {}
-    void render(sf::RenderWindow& window) override {}
-    void attack(std::vector<Enemy*>& enemies, std::vector<Projectile*>& projectiles, float deltaTime) override {}
+    void update(float) override {}
+    void attack(std::vector<Enemy*>&, std::vector<Projectile*>&, float) override {}
 };
 
 TEST_CASE("Testando a construcao e evolucao da Torre") {
@@ -19,11 +18,13 @@ TEST_CASE("Testando a construcao e evolucao da Torre") {
         CHECK(torre.getLevel() == 1);
         CHECK(torre.getDamage() == 20.0f);
         CHECK(torre.getRange() == 150.0f);
+        CHECK(torre.getFireRate() == 1.0f);
     }
 
     SUBCASE("Verifica se o upgrade sobe o nivel e o dano da torre") {
         torre.upgrade();
         CHECK(torre.getLevel() == 2); 
         CHECK(torre.getDamage() > 20.0f);
+        CHECK(torre.getRange() > 150.0f);
     }
 }

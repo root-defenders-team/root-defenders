@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "Enemy.hpp"
+#include "EnemyFactory.hpp"
 #include "Projectile.hpp"
 #include "Tower.hpp"
 
@@ -13,6 +14,7 @@ const int WAVE_BONUS_BASE = 20;      ///< CPU fixa ao concluir uma onda.
 const int WAVE_BONUS_PER_WAVE = 5;   ///< CPU extra por número da onda concluída.
 const int WAVE_SCORE = 100;          ///< Pontos ao concluir uma onda.
 const int VICTORY_SCORE_FACTOR = 10; ///< Pontos por ponto de integridade na vitória.
+const int KILL_SCORE_FACTOR = 10;    ///< Pontos por CPU de recompensa de um malware.
 
 } // namespace
 
@@ -66,6 +68,65 @@ bool GameManager::startNextWave() {
     ++currentWave;
     state = GameState::WaveRunning;
     return true;
+}
+
+void GameManager::update(float deltaTime) {
+    if (state != GameState::WaveRunning) {
+        return;
+    }
+
+    // 1. A onda atual diz quem nasce neste tick.
+    std::vector<EnemyType> born = waves[currentWave - 1].update(deltaTime);
+    for (std::size_t i = 0; i < born.size(); ++i) {
+        spawnEnemy(EnemyFactory::create(born[i], map.getPath()));
+    }
+
+    // 2. Os malwares andam pelo caminho.
+    for (std::size_t i = 0; i < enemies.size(); ++i) {
+        if (enemies[i]->isActive()) {
+            enemies[i]->update(deltaTime);
+        }
+    }
+
+    // 3. Quem chegou ao fim danifica o /root e sai do jogo, sem dar recompensa.
+    for (std::size_t i = 0; i < enemies.size(); ++i) {
+        if (enemies[i]->isActive() && enemies[i]->hasReachedEnd()) {
+            damageRoot(enemies[i]->getDamageToRoot());
+            enemies[i]->setActive(false);
+        }
+    }
+
+    // 4. As defesas recarregam e atacam os malwares ativos.
+    std::vector<Enemy*> activeEnemies;
+    for (std::size_t i = 0; i < enemies.size(); ++i) {
+        if (enemies[i]->isActive()) {
+            activeEnemies.push_back(enemies[i].get());
+        }
+    }
+    for (std::size_t i = 0; i < towers.size(); ++i) {
+        towers[i]->update(deltaTime);
+        towers[i]->tryAttack(activeEnemies, projectiles);
+    }
+
+    // 5. Os projéteis andam e acertam.
+    for (std::size_t i = 0; i < projectiles.size(); ++i) {
+        if (projectiles[i]->isActive()) {
+            projectiles[i]->update(deltaTime);
+        }
+    }
+
+    // 6. Malwares destruídos rendem CPU e pontos.
+    for (std::size_t i = 0; i < enemies.size(); ++i) {
+        if (enemies[i]->isActive() && enemies[i]->isDead()) {
+            gold += enemies[i]->getReward();
+            score += enemies[i]->getReward() * KILL_SCORE_FACTOR;
+            enemies[i]->setActive(false);
+        }
+    }
+
+    // 7. Remoção segura e 8. fim de onda, vitória e derrota.
+    removeInactiveEntities();
+    updateGameState();
 }
 
 void GameManager::spawnEnemy(std::unique_ptr<Enemy> enemy) {

@@ -68,6 +68,42 @@ bool GameManager::startNextWave() {
     return true;
 }
 
+void GameManager::spawnEnemy(std::unique_ptr<Enemy> enemy) {
+    if (enemy) {
+        enemies.push_back(std::move(enemy));
+    }
+}
+
+void GameManager::removeInactiveEntities() {
+    // (a) Um projétil cujo alvo saiu do jogo não pode mais acessá-lo.
+    for (std::size_t i = 0; i < projectiles.size(); ++i) {
+        const Enemy* target = projectiles[i]->getTarget();
+        if (target != nullptr && !target->isActive()) {
+            projectiles[i]->setActive(false);
+        }
+    }
+
+    // (b) Apaga os projéteis inativos.
+    std::size_t i = 0;
+    while (i < projectiles.size()) {
+        if (projectiles[i]->isActive()) {
+            ++i;
+        } else {
+            projectiles.erase(projectiles.begin() + i);
+        }
+    }
+
+    // (c) Só agora apaga os malwares inativos: nenhum projétil aponta mais para eles.
+    i = 0;
+    while (i < enemies.size()) {
+        if (enemies[i]->isActive()) {
+            ++i;
+        } else {
+            enemies.erase(enemies.begin() + i);
+        }
+    }
+}
+
 bool GameManager::buildTower(std::unique_ptr<Tower> tower) {
     if (!tower) {
         return false;

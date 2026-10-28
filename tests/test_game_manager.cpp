@@ -41,6 +41,22 @@ std::unique_ptr<Tower> makeTower(int x, int y, int cost) {
     return util::makeUnique<FakeTower>(cell, cost);
 }
 
+/// Malware falso, com vida e recompensa escolhidas pelo teste.
+class FakeEnemy : public Enemy {
+public:
+    FakeEnemy(const std::vector<Vector2>& path, float hp, int reward)
+        : Enemy(path, hp, 1.0f, reward, 10) {}
+
+    char getSymbol() const override {
+        return 'e';
+    }
+};
+
+/// Cria um malware falso que anda pelo caminho do mapa da partida.
+std::unique_ptr<Enemy> makeEnemy(const GameManager& game, float hp, int reward) {
+    return util::makeUnique<FakeEnemy>(game.getMap().getPath(), hp, reward);
+}
+
 /// Mapa 5x3 com o caminho na linha do meio, da coluna 0 até a coluna 4.
 Map makeTestMap() {
     Map map(5, 3);
@@ -345,6 +361,45 @@ TEST_CASE("changes the target priority of a tower") {
 
     CHECK(game.setTargetPriority(cell, TargetPriority::Strongest));
     CHECK(game.getTowerAt(cell)->getTargetPriority() == TargetPriority::Strongest);
+}
+
+TEST_CASE("spawns enemies") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    game.spawnEnemy(makeEnemy(game, 10.0f, 5));
+    game.spawnEnemy(makeEnemy(game, 10.0f, 5));
+
+    CHECK(game.getEnemies().size() == 2);
+}
+
+TEST_CASE("ignores a null enemy") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    std::unique_ptr<Enemy> noEnemy;
+
+    game.spawnEnemy(std::move(noEnemy));
+
+    CHECK(game.getEnemies().empty());
+}
+
+TEST_CASE("removes only the inactive enemies") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    game.spawnEnemy(makeEnemy(game, 10.0f, 5));
+    game.spawnEnemy(makeEnemy(game, 20.0f, 5));
+    game.getEnemies()[0]->setActive(false);
+
+    game.removeInactiveEntities();
+
+    REQUIRE(game.getEnemies().size() == 1);
+    CHECK(game.getEnemies()[0]->getMaxHp() == doctest::Approx(20.0f));
+}
+
+TEST_CASE("startNewGame removes the enemies") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    game.spawnEnemy(makeEnemy(game, 10.0f, 5));
+
+    game.startNewGame();
+
+    CHECK(game.getEnemies().empty());
 }
 
 } // TEST_SUITE("GameManager")

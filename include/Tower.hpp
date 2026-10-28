@@ -2,6 +2,7 @@
 #define TOWER_HPP
 
 #include "Entity.hpp"
+#include "TargetPriority.hpp"
 #include <vector>
 
 class Enemy;
@@ -11,16 +12,17 @@ class Projectile;
  * @brief Classe abstrata base para todas as torres defensivas do jogo.
  * 
  * Herda de Entity e gerencia os atributos e comportamentos comuns de combate,
- * como alcance, dano, cadência de tiro, recarga e melhorias.
+ * como alcance, dano, cadência de tiro, recarga, mira e melhorias.
  */
 class Tower : public Entity {
 protected:
-    float _range;         ///< Raio de alcance da torre.
-    float _damage;        ///< Dano base infligido pelos disparos.
-    float _fireRate;      ///< Cadência de tiro (disparos por segundo).
-    float _fireCooldown;  ///< Temporizador interno para controlar o intervalo entre tiros.
-    int _cost;            ///< Custo em ouro para construir ou melhorar a torre.
-    int _level;           ///< Nível atual da torre.
+    float _range;                   ///< Raio de alcance da torre.
+    float _damage;                  ///< Dano base infligido pelos disparos.
+    float _fireRate;                ///< Cadência de tiro (disparos por segundo).
+    float _fireCooldown;            ///< Temporizador interno para controlar o intervalo entre tiros.
+    int _cost;                      ///< Custo em ouro para construir ou melhorar a torre.
+    int _level;                     ///< Nível atual da torre.
+    TargetPriority _targetPriority; ///< Critério de prioridade para seleção de alvos.
 
 public:
     /**
@@ -33,9 +35,11 @@ public:
      * @param damage Dano dos disparos.
      * @param fireRate Cadência de tiros (disparos por segundo).
      * @param cost Custo da torre.
+     * @param priority Critério de seleção de alvo (padrão: First).
      */
     Tower(float startX, float startY, float width, float height, 
-          float range, float damage, float fireRate, int cost);
+          float range, float damage, float fireRate, int cost,
+          TargetPriority priority = TargetPriority::First);
 
     /**
      * @brief Destrutor virtual da torre.
@@ -84,13 +88,22 @@ public:
      */
     void resetCooldown();
 
-    // Getters públicos (Encapsulamento)
+    /**
+     * @brief Seleciona o melhor alvo dentre os inimigos ativos segundo o critério de prioridade.
+     * @param enemies Lista de ponteiros para inimigos ativos no mapa.
+     * @return Ponteiro para o inimigo escolhido ou nullptr se nenhum estiver no alcance.
+     */
+    Enemy* selectTarget(const std::vector<Enemy*>& enemies) const;
+
+    // Getters e Setters públicos (Encapsulamento)
     float getRange() const;
     float getDamage() const;
     int getCost() const;
     int getLevel() const;
     float getFireRate() const;
     float getCooldown() const;
+    TargetPriority getTargetPriority() const;
+    void setTargetPriority(TargetPriority priority);
 };
 
 #endif // TOWER_HPP

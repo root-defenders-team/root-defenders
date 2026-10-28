@@ -2,14 +2,16 @@
 #include "Enemy.hpp"
 
 Tower::Tower(float startX, float startY, float width, float height, 
-             float range, float damage, float fireRate, int cost)
+             float range, float damage, float fireRate, int cost,
+             TargetPriority priority)
     : Entity(startX, startY, width, height),
       _range(range),
       _damage(damage),
       _fireRate(fireRate),
       _fireCooldown(0.0f),
       _cost(cost),
-      _level(1) {}
+      _level(1),
+      _targetPriority(priority) {}
 
 void Tower::update(float deltaTime) {
     updateCooldown(deltaTime);
@@ -47,9 +49,57 @@ void Tower::resetCooldown() {
     }
 }
 
+Enemy* Tower::selectTarget(const std::vector<Enemy*>& enemies) const {
+    Enemy* selected = nullptr;
+
+    for (Enemy* enemy : enemies) {
+        if (!enemy || enemy->isDead() || !enemy->isActive() || !isInRange(*enemy)) {
+            continue;
+        }
+
+        if (!selected) {
+            selected = enemy;
+            continue;
+        }
+
+        switch (_targetPriority) {
+            case TargetPriority::First:
+                if (enemy->getWaypointIndex() > selected->getWaypointIndex()) {
+                    selected = enemy;
+                }
+                break;
+
+            case TargetPriority::Strongest:
+                if (enemy->getHp() > selected->getHp()) {
+                    selected = enemy;
+                }
+                break;
+
+            case TargetPriority::Weakest:
+                if (enemy->getHp() < selected->getHp()) {
+                    selected = enemy;
+                }
+                break;
+
+            case TargetPriority::Closest: {
+                float distEnemy = position.distanceTo(enemy->getPosition());
+                float distSelected = position.distanceTo(selected->getPosition());
+                if (distEnemy < distSelected) {
+                    selected = enemy;
+                }
+                break;
+            }
+        }
+    }
+
+    return selected;
+}
+
 float Tower::getRange() const { return _range; }
 float Tower::getDamage() const { return _damage; }
 int Tower::getCost() const { return _cost; }
 int Tower::getLevel() const { return _level; }
 float Tower::getFireRate() const { return _fireRate; }
 float Tower::getCooldown() const { return _fireCooldown; }
+TargetPriority Tower::getTargetPriority() const { return _targetPriority; }
+void Tower::setTargetPriority(TargetPriority priority) { _targetPriority = priority; }

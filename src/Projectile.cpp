@@ -1,84 +1,91 @@
-#include "../include/Projectile.hpp"
+#include "Projectile.hpp"
 
-#include "../include/Enemy.hpp"
+#include "Enemy.hpp"
 
 #include <cmath>
 #include <stdexcept>
 
-Projectile::Projectile(const sf::Vector2f& startPosition, Enemy& target,
-                       float speed, int damage)
-    : enemy_(target),
-      position_(startPosition),
+namespace {
+
+const float PROJECTILE_SIZE = 0.2f;
+
+} // namespace
+
+Projectile::Projectile(const Vector2& startPosition, Enemy& target,
+                       float speed, float damage)
+    : Entity(startPosition.x, startPosition.y, PROJECTILE_SIZE, PROJECTILE_SIZE),
+      target_(&target),
       speed_(speed),
       damage_(damage),
       impacted_(false) {
-    if (speed_ <= 0.0f || damage_ <= 0) {
+    if (speed_ <= 0.0f || damage_ <= 0.0f) {
         throw std::invalid_argument("A velocidade e o dano devem ser positivos.");
     }
 }
 
 void Projectile::update(float deltaTime) {
-    if (impacted_ || deltaTime <= 0.0f) {
+    if (!active || impacted_) {
         return;
     }
 
-    const sf::Vector2f targetPosition = enemy_.getPosition();
-    const float dx = targetPosition.x - position_.x;
-    const float dy = targetPosition.y - position_.y;
-    const float distance = std::sqrt(dx * dx + dy * dy);
-
-    if (distance == 0.0f) {
-        hit();
+    if (target_ == nullptr || !target_->isActive() || target_->isDead()) {
+        setActive(false);
         return;
     }
 
+    if (deltaTime <= 0.0f) {
+        return;
+    }
+
+    const Vector2 targetPosition = target_->getPosition();
+    const Vector2 direction = targetPosition - position;
+    const float distance = direction.length();
     const float travelDistance = speed_ * deltaTime;
-    if (travelDistance >= distance) {
-        position_ = targetPosition;
+
+    if (distance <= travelDistance) {
+        position = targetPosition;
         hit();
         return;
     }
 
-    const float movementRatio = travelDistance / distance;
-    position_.x += dx * movementRatio;
-    position_.y += dy * movementRatio;
+    if (distance > 0.0f) {
+        position = position + direction * (travelDistance / distance);
+    }
 }
 
-void Projectile::render(sf::RenderWindow& window) {
-    if (impacted_) {
-        return;
-    }
-
-    sf::CircleShape shape(4.0f);
-    shape.setFillColor(sf::Color::Red);
-    shape.setPosition(position_.x - shape.getRadius(),
-                      position_.y - shape.getRadius());
-    window.draw(shape);
+char Projectile::getSymbol() const {
+    return '*';
 }
 
 void Projectile::hit() {
-    if (impacted_) {
+    if (!active || impacted_) {
         return;
     }
 
-    enemy_.takeDamage(static_cast<float>(damage_));
+    if (target_ == nullptr || !target_->isActive() || target_->isDead()) {
+        setActive(false);
+        return;
+    }
+
+    target_->takeDamage(damage_);
     impacted_ = true;
+    setActive(false);
 }
 
-Enemy& Projectile::getEnemy() const noexcept {
-    return enemy_;
+bool Projectile::hasImpacted() const {
+    return impacted_;
 }
 
-const sf::Vector2f& Projectile::getPosition() const noexcept {
-    return position_;
+const Enemy* Projectile::getTarget() const {
+    return target_;
 }
 
-void Projectile::setPosition(const sf::Vector2f& newPosition) noexcept {
-    position_ = newPosition;
-}
-
-float Projectile::getSpeed() const noexcept {
+float Projectile::getSpeed() const {
     return speed_;
+}
+
+float Projectile::getDamage() const {
+    return damage_;
 }
 
 void Projectile::setSpeed(float newSpeed) {
@@ -89,22 +96,10 @@ void Projectile::setSpeed(float newSpeed) {
     speed_ = newSpeed;
 }
 
-int Projectile::getDamage() const noexcept {
-    return damage_;
-}
-
-void Projectile::setDamage(int newDamage) {
-    if (newDamage <= 0) {
+void Projectile::setDamage(float newDamage) {
+    if (newDamage <= 0.0f) {
         throw std::invalid_argument("O dano deve ser positivo.");
     }
 
     damage_ = newDamage;
-}
-
-bool Projectile::hasImpacted() const noexcept {
-    return impacted_;
-}
-
-void Projectile::setImpacted(bool impacted) noexcept {
-    impacted_ = impacted;
 }

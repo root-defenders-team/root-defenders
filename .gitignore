@@ -432,3 +432,10 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+# ROOT DEFENSE
+build/*
+!build/.gitkeep
+*.o
+*.d
+*.gcda
+*.gcno

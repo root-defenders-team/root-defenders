@@ -57,6 +57,34 @@ std::unique_ptr<Enemy> makeEnemy(const GameManager& game, float hp, int reward) 
     return util::makeUnique<FakeEnemy>(game.getMap().getPath(), hp, reward);
 }
 
+/// Defesa falsa que dispara projéteis muito lentos, para o teste decidir quando o alvo morre.
+class SlowShooterTower : public Tower {
+public:
+    explicit SlowShooterTower(const Cell& cell) : Tower(cell, 2.0f, 1.0f, 1.0f, 10) {}
+
+    char getSymbol() const override {
+        return 'S';
+    }
+
+protected:
+    void fire(Enemy& target, const std::vector<Enemy*>&,
+              std::vector<std::unique_ptr<Projectile> >& projectiles) override {
+        projectiles.push_back(util::makeUnique<Projectile>(getPosition(), target, 0.001f, 1.0f));
+    }
+
+    void applyUpgrade() override {}
+};
+
+/// Avança a partida até a onda atual acabar (no máximo 1000 ticks, para o teste nunca travar).
+void runUntilWaveEnds(GameManager& game) {
+    for (int tick = 0; tick < 1000; ++tick) {
+        if (game.getState() != GameManager::GameState::WaveRunning) {
+            return;
+        }
+        game.update(0.1f);
+    }
+}
+
 /// Mapa 5x3 com o caminho na linha do meio, da coluna 0 até a coluna 4.
 Map makeTestMap() {
     Map map(5, 3);
@@ -400,6 +428,95 @@ TEST_CASE("startNewGame removes the enemies") {
     game.startNewGame();
 
     CHECK(game.getEnemies().empty());
+}
+
+TEST_CASE("update does nothing before a wave starts") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    game.update(0.1f);
+
+    CHECK(game.getEnemies().empty());
+    CHECK(game.getState() == GameManager::GameState::Preparing);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+}
+
+TEST_CASE("a wave spawns its first enemy on the first tick") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    REQUIRE(game.startNextWave());
+
+    game.update(0.1f);
+
+    CHECK(game.getEnemies().size() == 1);
+}
+
+TEST_CASE("an enemy that reaches the end damages the root") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
+    REQUIRE(game.startNextWave());
+    game.update(0.1f);
+    REQUIRE(game.getEnemies().size() == 1);
+    int damage = game.getEnemies()[0]->getDamageToRoot();
+
+    runUntilWaveEnds(game);
+
+    CHECK(game.getRootIntegrity() == GameManager::INITIAL_INTEGRITY - damage);
+    CHECK(game.getEnemies().empty());
+    CHECK(game.getState() == GameManager::GameState::Preparing);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD + 25);
+    CHECK(game.getScore() == 100);
+}
+
+TEST_CASE("the last wave ends in victory") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    REQUIRE(game.startNextWave());
+
+    runUntilWaveEnds(game);
+
+    REQUIRE(game.getState() == GameManager::GameState::Victory);
+    CHECK(game.getScore() == 100 + game.getRootIntegrity() * 10);
+    CHECK_FALSE(game.startNextWave());
+}
+
+TEST_CASE("the game is lost when the root integrity reaches zero") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
+    REQUIRE(game.startNextWave());
+    game.damageRoot(GameManager::INITIAL_INTEGRITY);
+
+    game.update(0.1f);
+
+    CHECK(game.getState() == GameManager::GameState::Defeat);
+    CHECK_FALSE(game.startNextWave());
+}
+
+TEST_CASE("destroying an enemy gives gold and score") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
+    REQUIRE(game.startNextWave());
+    game.update(0.1f);
+    REQUIRE(game.getEnemies().size() == 1);
+    int reward = game.getEnemies()[0]->getReward();
+    game.getEnemies()[0]->takeDamage(100000.0f);
+
+    game.update(0.1f);
+
+    CHECK(game.getEnemies().empty());
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD + reward + 25);
+    CHECK(game.getScore() == reward * 10 + 100);
+    CHECK(game.getState() == GameManager::GameState::Preparing);
+}
+
+TEST_CASE("projectiles never outlive their target") {
+    GameManager game(makeTestMap(), makeTestWaves(2));
+    Cell cell = {0, 0};
+    REQUIRE(game.buildTower(util::makeUnique<SlowShooterTower>(cell)));
+    REQUIRE(game.startNextWave());
+    game.update(0.1f);
+    REQUIRE(game.getEnemies().size() == 1);
+    REQUIRE(game.getProjectiles().size() == 1);
+    game.getEnemies()[0]->takeDamage(100000.0f);
+
+    game.update(0.1f);
+
+    CHECK(game.getEnemies().empty());
+    CHECK(game.getProjectiles().empty());
 }
 
 } // TEST_SUITE("GameManager")

@@ -290,4 +290,61 @@ TEST_CASE("startNewGame removes the towers and frees their cells") {
     CHECK(game.getMap().isBuildable(cell));
 }
 
+TEST_CASE("upgrades a tower and charges the upgrade cost") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+    REQUIRE(game.buildTower(makeTower(2, 0, 100)));
+    int upgradeCost = game.getTowerAt(cell)->getUpgradeCost();
+
+    CHECK(game.upgradeTower(cell));
+    CHECK(game.getTowerAt(cell)->getLevel() == 2);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD - 100 - upgradeCost);
+}
+
+TEST_CASE("does not upgrade past the maximum level") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+    REQUIRE(game.buildTower(makeTower(2, 0, 10)));
+    game.addGold(10000);
+    for (int level = 1; level < Tower::MAX_LEVEL; ++level) {
+        REQUIRE(game.upgradeTower(cell));
+    }
+    int goldAtMaxLevel = game.getGold();
+
+    CHECK_FALSE(game.upgradeTower(cell));
+    CHECK(game.getTowerAt(cell)->getLevel() == Tower::MAX_LEVEL);
+    CHECK(game.getGold() == goldAtMaxLevel);
+}
+
+TEST_CASE("does not upgrade without enough gold") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+    REQUIRE(game.buildTower(makeTower(2, 0, GameManager::INITIAL_GOLD)));
+
+    CHECK_FALSE(game.upgradeTower(cell));
+    CHECK(game.getTowerAt(cell)->getLevel() == 1);
+    CHECK(game.getGold() == 0);
+}
+
+TEST_CASE("sells a tower, refunds half and frees the cell") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+    REQUIRE(game.buildTower(makeTower(2, 0, 100)));
+
+    CHECK(game.sellTower(cell));
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD - 100 + 50);
+    CHECK(game.getTowerAt(cell) == nullptr);
+    CHECK(game.getTowers().empty());
+    CHECK(game.getMap().isBuildable(cell));
+}
+
+TEST_CASE("changes the target priority of a tower") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+    REQUIRE(game.buildTower(makeTower(2, 0, 50)));
+
+    CHECK(game.setTargetPriority(cell, TargetPriority::Strongest));
+    CHECK(game.getTowerAt(cell)->getTargetPriority() == TargetPriority::Strongest);
+}
+
 } // TEST_SUITE("GameManager")

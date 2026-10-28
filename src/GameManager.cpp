@@ -84,6 +84,40 @@ bool GameManager::buildTower(std::unique_ptr<Tower> tower) {
     return true;
 }
 
+bool GameManager::upgradeTower(const Cell& cell) {
+    Tower* tower = findTower(cell);
+    if (tower == nullptr || !tower->canUpgrade()) {
+        return false;
+    }
+    // O custo é lido antes do upgrade, pois ele muda com o nível.
+    if (!spendGold(tower->getUpgradeCost())) {
+        return false;
+    }
+    tower->upgrade();
+    return true;
+}
+
+bool GameManager::sellTower(const Cell& cell) {
+    for (std::size_t i = 0; i < towers.size(); ++i) {
+        if (towers[i]->getCell() == cell) {
+            gold += towers[i]->getSellValue();
+            map.releaseCell(cell);
+            towers.erase(towers.begin() + i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GameManager::setTargetPriority(const Cell& cell, TargetPriority priority) {
+    Tower* tower = findTower(cell);
+    if (tower == nullptr) {
+        return false;
+    }
+    tower->setTargetPriority(priority);
+    return true;
+}
+
 const Tower* GameManager::getTowerAt(const Cell& cell) const {
     return findTower(cell);
 }

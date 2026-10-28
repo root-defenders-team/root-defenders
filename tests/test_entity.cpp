@@ -1,14 +1,14 @@
-#include <doctest/doctest.h>
-#include <SFML/Graphics.hpp>
+﻿#include <doctest/doctest.h>
 
 #include "Entity.hpp"
+#include "Vector2.hpp"
+#include "Rect.hpp"
 
 // Classe concreta mínima apenas para permitir instanciar e testar a base Entity
 class DummyEntity : public Entity {
 public:
     DummyEntity(float x, float y, float w, float h) : Entity(x, y, w, h) {}
     void update(float) override {}
-    void render(sf::RenderWindow&) override {}
 };
 
 TEST_SUITE("Entity") {
@@ -22,7 +22,7 @@ TEST_CASE("initializes with correct position, size, and active state") {
     // Assumindo que a entidade inicie ativa por padrão no construtor
     CHECK(entity.isActive() == true); 
 
-    sf::FloatRect bounds = entity.getBounds();
+    Rect bounds = entity.getBounds();
     CHECK(bounds.left == 10.5f);
     CHECK(bounds.top == 20.0f);
     CHECK(bounds.width == 30.0f);
@@ -42,11 +42,11 @@ TEST_CASE("updates active state") {
 TEST_CASE("updates position coordinates") {
     DummyEntity entity(0, 0, 10, 10);
 
-    entity.setPosition(sf::Vector2f(100.0f, 150.5f));
+    entity.setPosition(Vector2(100.0f, 150.5f));
     CHECK(entity.getPosition().x == 100.0f);
     CHECK(entity.getPosition().y == 150.5f);
 
-    sf::FloatRect bounds = entity.getBounds();
+    Rect bounds = entity.getBounds();
     CHECK(bounds.left == 100.0f);
     CHECK(bounds.top == 150.5f);
 }

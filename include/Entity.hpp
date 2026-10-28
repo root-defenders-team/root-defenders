@@ -1,7 +1,8 @@
-#ifndef ENTITY_HPP
+﻿#ifndef ENTITY_HPP
 #define ENTITY_HPP
 
-#include <SFML/Graphics.hpp>
+#include "Vector2.hpp"
+#include "Rect.hpp"
 
 /**
  * @brief Classe abstrata base para todas as entidades do jogo.
@@ -11,9 +12,9 @@
  */
 class Entity {
 protected:
-    sf::Vector2f position; ///< Armazena a posição horizontal e vertical da entidade.
-    sf::Vector2f size;     ///< Armazena a largura e a altura da entidade.
-    bool active;           ///< Controla se a entidade está ativa no jogo.
+    Vector2 position; ///< Armazena a posição horizontal e vertical da entidade.
+    Vector2 size;     ///< Armazena a largura e a altura da entidade.
+    bool active;      ///< Controla se a entidade está ativa no jogo.
 
 public:
     /**
@@ -41,16 +42,6 @@ public:
     virtual void update(float deltaTime) = 0;
 
     /**
-     * @brief Define a interface de renderização.
-     * 
-     * Método virtual puro que obriga as subclasses a saberem como se desenhar 
-     * na tela.
-     * 
-     * @param window Referência para a janela principal (sf::RenderWindow) da SFML.
-     */
-    virtual void render(sf::RenderWindow& window) = 0;
-
-    /**
      * @brief Permite verificações básicas de colisão entre entidades.
      * 
      * @param other Referência constante para a entidade alvo da verificação.
@@ -61,11 +52,11 @@ public:
     /**
      * @brief Representa a área ocupada pela entidade.
      * 
-     * Essencial para a lógica de colisão e para os limites visuais na SFML.
+     * Essencial para a lógica de colisão e para os limites físicos no mapa.
      * 
-     * @return sf::FloatRect contendo o retângulo delimitador (Bounding Box) da entidade.
+     * @return Rect contendo o retângulo delimitador (Bounding Box) da entidade.
      */
-    sf::FloatRect getBounds() const;
+    Rect getBounds() const;
 
     /**
      * @brief Consulta o status de atividade da entidade.
@@ -81,15 +72,15 @@ public:
 
     /**
      * @brief Obtém a posição atual da entidade.
-     * @return sf::Vector2f contendo as coordenadas X e Y.
+     * @return Vector2 contendo as coordenadas X e Y.
      */
-    sf::Vector2f getPosition() const;
+    Vector2 getPosition() const;
 
     /**
      * @brief Define uma nova posição no mapa para a entidade.
      * @param newPosition Vetor 2D contendo as novas coordenadas.
      */
-    void setPosition(const sf::Vector2f& newPosition);
+    void setPosition(const Vector2& newPosition);
 };
 
 #endif // ENTITY_HPP

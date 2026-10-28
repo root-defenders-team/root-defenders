@@ -1,17 +1,45 @@
 #include <doctest/doctest.h>
 
+#include <memory>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "Cell.hpp"
 #include "CellType.hpp"
+#include "Enemy.hpp"
 #include "EnemyType.hpp"
 #include "GameManager.hpp"
+#include "MakeUnique.hpp"
 #include "Map.hpp"
+#include "Projectile.hpp"
 #include "SpawnGroup.hpp"
+#include "Tower.hpp"
 #include "Wave.hpp"
 
 namespace {
+
+/// Defesa falsa: não atira e não melhora nada; serve só para testar as regras do jogo.
+class FakeTower : public Tower {
+public:
+    FakeTower(const Cell& cell, int cost) : Tower(cell, 2.0f, 10.0f, 1.0f, cost) {}
+
+    char getSymbol() const override {
+        return 'T';
+    }
+
+protected:
+    void fire(Enemy&, const std::vector<Enemy*>&,
+              std::vector<std::unique_ptr<Projectile> >&) override {}
+
+    void applyUpgrade() override {}
+};
+
+/// Cria uma defesa falsa na célula (x, y).
+std::unique_ptr<Tower> makeTower(int x, int y, int cost) {
+    Cell cell = {x, y};
+    return util::makeUnique<FakeTower>(cell, cost);
+}
 
 /// Mapa 5x3 com o caminho na linha do meio, da coluna 0 até a coluna 4.
 Map makeTestMap() {
@@ -200,6 +228,66 @@ TEST_CASE("has no tower on an empty cell") {
     CHECK_FALSE(game.sellTower(cell));
     CHECK_FALSE(game.setTargetPriority(cell, TargetPriority::Strongest));
     CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+}
+
+TEST_CASE("builds a tower on a free cell") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+
+    CHECK(game.buildTower(makeTower(2, 0, 50)));
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD - 50);
+    CHECK(game.getTowers().size() == 1);
+    REQUIRE(game.getTowerAt(cell) != nullptr);
+    CHECK(game.getTowerAt(cell)->getCost() == 50);
+    CHECK_FALSE(game.getMap().isBuildable(cell));
+}
+
+TEST_CASE("does not build on the path or outside the map") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    CHECK_FALSE(game.buildTower(makeTower(2, 1, 50)));
+    CHECK_FALSE(game.buildTower(makeTower(9, 9, 50)));
+    CHECK(game.getTowers().empty());
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+}
+
+TEST_CASE("does not build on an occupied cell") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+
+    REQUIRE(game.buildTower(makeTower(2, 0, 50)));
+    CHECK_FALSE(game.buildTower(makeTower(2, 0, 50)));
+    CHECK(game.getTowers().size() == 1);
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD - 50);
+}
+
+TEST_CASE("does not build without enough gold") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+
+    CHECK_FALSE(game.buildTower(makeTower(2, 0, GameManager::INITIAL_GOLD + 1)));
+    CHECK(game.getTowers().empty());
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+    CHECK(game.getMap().isBuildable(cell));
+}
+
+TEST_CASE("rejects a null tower") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    std::unique_ptr<Tower> noTower;
+
+    CHECK_FALSE(game.buildTower(std::move(noTower)));
+    CHECK(game.getTowers().empty());
+}
+
+TEST_CASE("startNewGame removes the towers and frees their cells") {
+    GameManager game(makeTestMap(), makeTestWaves(1));
+    Cell cell = {2, 0};
+    REQUIRE(game.buildTower(makeTower(2, 0, 50)));
+
+    game.startNewGame();
+
+    CHECK(game.getTowers().empty());
+    CHECK(game.getTowerAt(cell) == nullptr);
+    CHECK(game.getMap().isBuildable(cell));
 }
 
 } // TEST_SUITE("GameManager")

@@ -1,6 +1,7 @@
 #include "GameManager.hpp"
 
 #include <stdexcept>
+#include <utility>
 
 #include "Enemy.hpp"
 #include "Projectile.hpp"
@@ -65,6 +66,26 @@ bool GameManager::startNextWave() {
     ++currentWave;
     state = GameState::WaveRunning;
     return true;
+}
+
+bool GameManager::buildTower(std::unique_ptr<Tower> tower) {
+    if (!tower) {
+        return false;
+    }
+    Cell cell = tower->getCell();
+    if (!map.isBuildable(cell)) {
+        return false;
+    }
+    if (!spendGold(tower->getCost())) {
+        return false;
+    }
+    map.occupyCell(cell);
+    towers.push_back(std::move(tower));
+    return true;
+}
+
+const Tower* GameManager::getTowerAt(const Cell& cell) const {
+    return findTower(cell);
 }
 
 int GameManager::getGold() const {
@@ -145,6 +166,15 @@ const std::vector<std::unique_ptr<Enemy> >& GameManager::getEnemies() const {
 
 const std::vector<std::unique_ptr<Projectile> >& GameManager::getProjectiles() const {
     return projectiles;
+}
+
+Tower* GameManager::findTower(const Cell& cell) const {
+    for (std::size_t i = 0; i < towers.size(); ++i) {
+        if (towers[i]->getCell() == cell) {
+            return towers[i].get();
+        }
+    }
+    return nullptr;
 }
 
 void GameManager::updateGameState() {

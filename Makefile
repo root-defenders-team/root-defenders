@@ -13,9 +13,13 @@ BIN_DIR := $(BUILD_DIR)/bin
 TARGET := $(BIN_DIR)/root_defense
 TEST_TARGET := $(BIN_DIR)/tests
 
-SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
+# Esperando o Wave, EnemyFactory e Tower
+EXCLUDED_SOURCES := $(SRC_DIR)/GameManager.cpp
+EXCLUDED_TESTS := $(TEST_DIR)/test_game_manager.cpp
+
+SOURCES := $(filter-out $(EXCLUDED_SOURCES),$(wildcard $(SRC_DIR)/*.cpp))
 LIB_SOURCES := $(filter-out $(SRC_DIR)/main.cpp,$(SOURCES))
-TEST_SOURCES := $(wildcard $(TEST_DIR)/*.cpp)
+TEST_SOURCES := $(filter-out $(EXCLUDED_TESTS),$(wildcard $(TEST_DIR)/*.cpp))
 
 OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/src/%.o,$(SOURCES))
 LIB_OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/src/%.o,$(LIB_SOURCES))

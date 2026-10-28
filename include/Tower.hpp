@@ -11,7 +11,7 @@ class Projectile;
  * @brief Classe abstrata base para todas as torres defensivas do jogo.
  * 
  * Herda de Entity e gerencia os atributos e comportamentos comuns de combate,
- * como alcance, dano, cadência de tiro e melhorias.
+ * como alcance, dano, cadência de tiro, recarga e melhorias.
  */
 class Tower : public Entity {
 protected:
@@ -31,7 +31,7 @@ public:
      * @param height Altura da torre.
      * @param range Alcance de ataque.
      * @param damage Dano dos disparos.
-     * @param fireRate Cadência de tiros.
+     * @param fireRate Cadência de tiros (disparos por segundo).
      * @param cost Custo da torre.
      */
     Tower(float startX, float startY, float width, float height, 
@@ -43,10 +43,13 @@ public:
     virtual ~Tower() = default;
 
     /**
+     * @brief Atualiza temporizadores internos da torre (ex: recarga).
+     * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
+     */
+    virtual void update(float deltaTime) override;
+
+    /**
      * @brief Método virtual puro para o ataque polimórfico.
-     * 
-     * Cada tipo específico de torre implementará sua própria lógica de escolha de alvo.
-     * 
      * @param enemies Referência para o vetor de inimigos ativos no mapa.
      * @param projectiles Referência para o vetor de projéteis ativos no jogo.
      * @param deltaTime Tempo decorrido desde o último frame.
@@ -58,12 +61,36 @@ public:
      */
     virtual void upgrade();
 
+    /**
+     * @brief Verifica se um inimigo está dentro do raio de alcance da torre.
+     * @param enemy Inimigo a ser verificado.
+     * @return true se a distância for menor ou igual ao alcance.
+     */
+    bool isInRange(const Enemy& enemy) const;
+
+    /**
+     * @brief Verifica se a torre está pronta para disparar (cooldown zerado).
+     */
+    bool canShoot() const;
+
+    /**
+     * @brief Atualiza o temporizador de recarga.
+     * @param deltaTime Tempo decorrido em segundos.
+     */
+    void updateCooldown(float deltaTime);
+
+    /**
+     * @brief Reinicia o temporizador de recarga após um disparo.
+     */
+    void resetCooldown();
+
     // Getters públicos (Encapsulamento)
     float getRange() const;
     float getDamage() const;
     int getCost() const;
     int getLevel() const;
     float getFireRate() const;
+    float getCooldown() const;
 };
 
 #endif // TOWER_HPP

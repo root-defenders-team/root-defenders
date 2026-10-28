@@ -14,10 +14,10 @@
  */
 class Enemy : public Entity {
 protected:
-    float _hp;             ///< Pontos de vida atuais do inimigo.
-    float _maxHp;          ///< Pontos de vida máximos.
-    float _speed;          ///< Velocidade de deslocamento no mapa.
-    int _goldReward;       ///< Recompensa em ouro concedida ao ser derrotado.
+    float _hp;                  ///< Pontos de vida atuais do inimigo.
+    float _maxHp;               ///< Pontos de vida máximos.
+    float _speed;               ///< Velocidade de deslocamento no mapa (unidades por segundo).
+    int _goldReward;            ///< Recompensa em ouro concedida ao ser derrotado.
     std::size_t _waypointIndex; ///< Índice atual do waypoint que o inimigo está perseguindo.
 
 public:
@@ -40,10 +40,17 @@ public:
     virtual ~Enemy() = default;
 
     /**
-     * @brief Atualiza a posição do inimigo seguindo os waypoints do mapa.
+     * @brief Atualiza a lógica interna do inimigo a cada ciclo.
      * @param deltaTime Tempo decorrido desde a última atualização.
      */
-    virtual void update(float deltaTime) override = 0;
+    virtual void update(float deltaTime) override;
+
+    /**
+     * @brief Movimenta o inimigo seguindo a lista de waypoints do caminho.
+     * @param waypoints Lista sequencial de pontos do caminho.
+     * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
+     */
+    void moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime);
 
     /**
      * @brief Aplica dano ao inimigo (reduz seu HP).
@@ -69,9 +76,19 @@ public:
     float getHp() const;
 
     /**
+     * @brief Obtém os pontos de vida máximos.
+     */
+    float getMaxHp() const;
+
+    /**
      * @brief Obtém a velocidade de movimento.
      */
     float getSpeed() const;
+
+    /**
+     * @brief Obtém o índice do waypoint atual que o inimigo está perseguindo.
+     */
+    std::size_t getWaypointIndex() const;
 
     /**
      * @brief Verifica se o inimigo chegou ao final da rota de waypoints.

@@ -16,7 +16,11 @@ GAME_MANAGER_TEST_SOURCES := tests/test_main.cpp tests/test_game_manager.cpp
 ENTITIES_RUNNER := $(BUILD_DIR)/test_entities
 ENTITIES_TEST_SOURCES := tests/test_main.cpp tests/test_enemy.cpp tests/test_tower.cpp
 
-.PHONY: test test-map test-game-manager test-entities coverage coverage-game-manager coverage-entities clean help
+MAP_LOADER_RUNNER := $(BUILD_DIR)/test_map_loader
+MAP_LOADER_TEST_SOURCES := tests/test_main.cpp tests/test_map.cpp tests/test_map_loader.cpp
+MAP_LOADER_SOURCES := src/Vector2.cpp src/Cell.cpp src/Map.cpp src/MapLoader.cpp
+
+.PHONY: test test-map test-game-manager test-entities test-map-loader coverage coverage-game-manager coverage-entities clean help
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -30,6 +34,9 @@ $(GAME_MANAGER_RUNNER): $(GAME_MANAGER_TEST_SOURCES) $(SOURCE_FILES) | $(BUILD_D
 $(ENTITIES_RUNNER): $(ENTITIES_TEST_SOURCES) $(SOURCE_FILES) | $(BUILD_DIR)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(ENTITIES_TEST_SOURCES) $(SOURCE_FILES) $(LDFLAGS) $(LDLIBS) -o $@
 
+$(MAP_LOADER_RUNNER): $(MAP_LOADER_TEST_SOURCES) $(MAP_LOADER_SOURCES) | $(BUILD_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(MAP_LOADER_TEST_SOURCES) $(MAP_LOADER_SOURCES) $(LDFLAGS) -o $@
+
 test: $(TEST_RUNNER)
 	./$(TEST_RUNNER)
 
@@ -40,6 +47,9 @@ test-game-manager: $(GAME_MANAGER_RUNNER)
 
 test-entities: $(ENTITIES_RUNNER)
 	./$(ENTITIES_RUNNER)
+
+test-map-loader: $(MAP_LOADER_RUNNER)
+	./$(MAP_LOADER_RUNNER)
 
 coverage: CXXFLAGS += --coverage -O0
 coverage: LDFLAGS += --coverage
@@ -67,6 +77,7 @@ help:
 	@echo "make test-map              Compatibility alias for make test"
 	@echo "make test-game-manager     Build and run the GameManager unit tests"
 	@echo "make test-entities         Build and run the Tower and Enemy unit tests"
+	@echo "make test-map-loader       Build and run the Map and MapLoader unit tests"
 	@echo "make coverage              Run all tests and require at least 60% line coverage"
 	@echo "make coverage-game-manager Run the GameManager tests and require at least 60% line coverage of GameManager.cpp"
 	@echo "make coverage-entities     Run the entities tests and require at least 60% line coverage of Tower and Enemy"

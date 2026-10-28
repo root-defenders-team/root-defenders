@@ -6,74 +6,83 @@ Map::Map(std::size_t width, std::size_t height)
         throw std::invalid_argument("As dimensoes do mapa devem ser maiores que zero.");
     }
 
-    traversableCells_.assign(height_, std::vector<bool>(width_, true));
+    cells_.assign(height_, std::vector<CellType>(width_, CellType::Buildable));
     occupiedCells_.assign(height_, std::vector<bool>(width_, false));
 }
 
-std::size_t Map::width() const noexcept {
+std::size_t Map::getWidth() const {
     return width_;
 }
 
-std::size_t Map::height() const noexcept {
+std::size_t Map::getHeight() const {
     return height_;
 }
 
-bool Map::isInside(int x, int y) const noexcept {
-    return x >= 0 && y >= 0 && static_cast<std::size_t>(x) < width_ &&
-           static_cast<std::size_t>(y) < height_;
+bool Map::isInside(const Cell& cell) const {
+    return cell.x >= 0 && cell.y >= 0 &&
+           static_cast<std::size_t>(cell.x) < width_ &&
+           static_cast<std::size_t>(cell.y) < height_;
 }
 
-bool Map::isTraversable(int x, int y) const noexcept {
-    return isInside(x, y) && traversableCells_[y][x];
+bool Map::isPath(const Cell& cell) const {
+    return isInside(cell) && cells_[cell.y][cell.x] == CellType::Path;
 }
 
-bool Map::isBlocked(int x, int y) const noexcept {
-    return !isTraversable(x, y);
+bool Map::isBlocked(const Cell& cell) const {
+    return !isInside(cell) || cells_[cell.y][cell.x] == CellType::Blocked;
 }
 
-bool Map::setTraversable(int x, int y, bool traversable) noexcept {
-    if (!isInside(x, y)) {
+bool Map::isBuildable(const Cell& cell) const {
+    return isInside(cell) && cells_[cell.y][cell.x] == CellType::Buildable &&
+           !occupiedCells_[cell.y][cell.x];
+}
+
+CellType Map::getCellType(const Cell& cell) const {
+    if (!isInside(cell)) {
+        throw std::out_of_range("A celula deve estar dentro do mapa.");
+    }
+
+    return cells_[cell.y][cell.x];
+}
+
+void Map::setCellType(const Cell& cell, CellType type) {
+    if (!isInside(cell)) {
+        throw std::out_of_range("A celula deve estar dentro do mapa.");
+    }
+
+    cells_[cell.y][cell.x] = type;
+}
+
+bool Map::occupyCell(const Cell& cell) {
+    if (!isBuildable(cell)) {
         return false;
     }
 
-    if (!traversable && occupiedCells_[y][x]) {
-        return false;
-    }
-
-    traversableCells_[y][x] = traversable;
+    occupiedCells_[cell.y][cell.x] = true;
     return true;
 }
 
-bool Map::isCellFree(int x, int y) const noexcept {
-    return isInside(x, y) && !occupiedCells_[y][x];
-}
-
-bool Map::occupyCell(int x, int y) noexcept {
-    if (!isCellFree(x, y)) {
+bool Map::releaseCell(const Cell& cell) {
+    if (!isInside(cell) || !occupiedCells_[cell.y][cell.x]) {
         return false;
     }
 
-    occupiedCells_[y][x] = true;
+    occupiedCells_[cell.y][cell.x] = false;
     return true;
 }
 
-bool Map::releaseCell(int x, int y) noexcept {
-    if (!isInside(x, y) || !occupiedCells_[y][x]) {
-        return false;
-    }
-
-    occupiedCells_[y][x] = false;
-    return true;
-}
-
-void Map::addWaypoint(Point waypoint) {
-    if (!isInside(waypoint.x, waypoint.y)) {
+void Map::addWaypoint(const Cell& waypoint) {
+    if (!isInside(waypoint)) {
         throw std::out_of_range("O waypoint deve estar dentro do mapa.");
     }
 
     waypoints_.push_back(waypoint);
 }
 
-const std::vector<Map::Point>& Map::waypoints() const noexcept {
+const std::vector<Cell>& Map::getWaypoints() const {
     return waypoints_;
+}
+
+bool Map::hasPath() const {
+    return waypoints_.size() >= 2;
 }

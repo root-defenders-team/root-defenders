@@ -5,113 +5,115 @@
 #include <stdexcept>
 #include <vector>
 
+#include "Cell.hpp"
+#include "CellType.hpp"
+
 /**
- * @brief Representa o cenário jogável e a rota dos inimigos.
+ * @brief Representa a grade do cenário e o caminho dos inimigos.
  *
- * Map não é uma Entity: ele organiza o espaço do jogo, informa quais células
- * podem receber torres e fornece os pontos que os inimigos devem percorrer.
- * A implementação dos métodos será definida posteriormente no arquivo .cpp.
+ * Cada posição do mapa possui um tipo: livre para construção, caminho ou
+ * obstáculo. O mapa também guarda quais células já receberam uma torre e os
+ * waypoints que formam a rota dos inimigos.
  */
 class Map {
 public:
     /**
-     * @brief Ponto inteiro utilizado para posições e waypoints do mapa.
-     */
-    struct Point {
-        /** @brief Coordenada horizontal do ponto. */
-        int x;
-
-        /** @brief Coordenada vertical do ponto. */
-        int y;
-    };
-
-    /**
-     * @brief Cria um mapa com a quantidade especificada de colunas e linhas.
-     *
-     * @param width Quantidade de colunas do mapa.
-     * @param height Quantidade de linhas do mapa.
-     * @throws std::invalid_argument caso width ou height seja zero.
+     * @brief Cria um mapa com a quantidade indicada de colunas e linhas.
+     * @param width Quantidade de colunas.
+     * @param height Quantidade de linhas.
+     * @throws std::invalid_argument se width ou height for zero.
      */
     Map(std::size_t width, std::size_t height);
 
     /** @brief Retorna a quantidade de colunas do mapa. */
-    [[nodiscard]] std::size_t width() const noexcept;
+    std::size_t getWidth() const;
 
     /** @brief Retorna a quantidade de linhas do mapa. */
-    [[nodiscard]] std::size_t height() const noexcept;
+    std::size_t getHeight() const;
 
     /**
-     * @brief Verifica se uma coordenada pertence aos limites do mapa.
-     * @param x Coordenada horizontal.
-     * @param y Coordenada vertical.
-     * @return true se a coordenada estiver dentro do mapa.
+     * @brief Verifica se uma célula pertence aos limites do mapa.
+     * @param cell Célula a verificar.
+     * @return true se a célula estiver dentro do mapa.
      */
-    [[nodiscard]] bool isInside(int x, int y) const noexcept;
+    bool isInside(const Cell& cell) const;
 
     /**
-     * @brief Verifica se uma célula pode ser atravessada por inimigos.
-     *
-     * Uma célula transitável pertence ao mapa e não está bloqueada pelo
-     * terreno. A ocupação por uma torre é uma informação independente.
-     *
-     * @return true quando a célula pode fazer parte da rota dos inimigos.
+     * @brief Verifica se uma célula faz parte do caminho dos inimigos.
+     * @param cell Célula a verificar.
+     * @return true se o tipo da célula for Path.
      */
-    [[nodiscard]] bool isTraversable(int x, int y) const noexcept;
+    bool isPath(const Cell& cell) const;
 
     /**
-     * @brief Verifica se uma célula está bloqueada para a movimentação.
-     * @return true quando a célula está fora do mapa ou não é transitável.
+     * @brief Verifica se uma célula é um obstáculo ou está fora do mapa.
+     * @param cell Célula a verificar.
+     * @return true se a célula estiver bloqueada.
      */
-    [[nodiscard]] bool isBlocked(int x, int y) const noexcept;
+    bool isBlocked(const Cell& cell) const;
 
     /**
-     * @brief Define se uma célula faz parte do terreno transitável.
-     *
-     * @param x Coordenada horizontal.
-     * @param y Coordenada vertical.
-     * @param traversable true para liberar a passagem; false para bloquear.
-     * @return false quando a coordenada é inválida ou quando a célula ocupada
-     *         por uma torre não pode ser bloqueada.
+     * @brief Verifica se uma célula pode receber uma torre.
+     * @param cell Célula a verificar.
+     * @return true se ela for Buildable, estiver dentro do mapa e livre.
      */
-    bool setTraversable(int x, int y, bool traversable) noexcept;
+    bool isBuildable(const Cell& cell) const;
 
     /**
-     * @brief Verifica se uma célula válida está livre para construção.
-     * @return true quando a célula está dentro do mapa e não está ocupada.
+     * @brief Retorna o tipo de uma célula.
+     * @param cell Célula consultada.
+     * @return Tipo armazenado na célula.
+     * @throws std::out_of_range se a célula estiver fora do mapa.
      */
-    [[nodiscard]] bool isCellFree(int x, int y) const noexcept;
+    CellType getCellType(const Cell& cell) const;
 
     /**
-     * @brief Marca uma célula como ocupada.
-     * @return true se a célula foi ocupada; false se for inválida ou já estiver ocupada.
+     * @brief Altera o tipo de uma célula.
+     * @param cell Célula a alterar.
+     * @param type Novo tipo da célula.
+     * @throws std::out_of_range se a célula estiver fora do mapa.
      */
-    bool occupyCell(int x, int y) noexcept;
+    void setCellType(const Cell& cell, CellType type);
 
     /**
-     * @brief Libera uma célula previamente ocupada.
-     * @return true se a célula foi liberada; false se a coordenada for inválida ou já estiver livre.
+     * @brief Marca uma célula construível como ocupada por uma torre.
+     * @param cell Célula a ocupar.
+     * @return true se a ocupação foi realizada.
      */
-    bool releaseCell(int x, int y) noexcept;
+    bool occupyCell(const Cell& cell);
 
     /**
-     * @brief Adiciona um waypoint ao final da rota dos inimigos.
-     * @param waypoint Ponto que será visitado pela rota.
-     * @throws std::out_of_range caso o waypoint esteja fora do mapa.
+     * @brief Libera uma célula que estava ocupada.
+     * @param cell Célula a liberar.
+     * @return true se a célula estava ocupada e foi liberada.
      */
-    void addWaypoint(Point waypoint);
+    bool releaseCell(const Cell& cell);
 
     /**
-     * @brief Retorna os waypoints na ordem em que devem ser percorridos.
-     * @return Referência somente para leitura da rota do mapa.
+     * @brief Adiciona uma célula ao final da rota dos inimigos.
+     * @param waypoint Célula a adicionar à rota.
+     * @throws std::out_of_range se o waypoint estiver fora do mapa.
      */
-    [[nodiscard]] const std::vector<Point>& waypoints() const noexcept;
+    void addWaypoint(const Cell& waypoint);
+
+    /**
+     * @brief Retorna os waypoints na ordem da rota.
+     * @return Referência constante para os waypoints.
+     */
+    const std::vector<Cell>& getWaypoints() const;
+
+    /**
+     * @brief Informa se a rota possui origem e destino.
+     * @return true quando existem pelo menos dois waypoints.
+     */
+    bool hasPath() const;
 
 private:
     std::size_t width_;
     std::size_t height_;
-    std::vector<std::vector<bool>> traversableCells_;
-    std::vector<std::vector<bool>> occupiedCells_;
-    std::vector<Point> waypoints_;
+    std::vector<std::vector<CellType> > cells_;
+    std::vector<std::vector<bool> > occupiedCells_;
+    std::vector<Cell> waypoints_;
 };
 
-#endif // TOWER_DEFENSE_MAP_HPP
+#endif // MAP_HPP

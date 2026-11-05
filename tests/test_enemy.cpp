@@ -1,106 +1,153 @@
 ﻿#include <doctest/doctest.h>
+
 #include <stdexcept>
 #include <vector>
 
 #include "Enemy.hpp"
 #include "Vector2.hpp"
 
-class InimigoTeste : public Enemy {
+namespace {
+
+class DummyEnemyDoc2 : public Enemy {
 public:
-    InimigoTeste(float x, float y, float w, float h, float hp, float speed, int gold)
-        : Enemy(x, y, w, h, hp, speed, gold) {}
+    DummyEnemyDoc2(const std::vector<Vector2>& path, float maxHp, float speed,
+                   int reward, int damageToRoot)
+        : Enemy(path, maxHp, speed, reward, damageToRoot) {}
 };
+
+} // namespace
 
 TEST_SUITE("Enemy") {
 
-TEST_CASE("inicializacao e getters basicos") {
-    InimigoTeste enemy(0.0f, 0.0f, 32.0f, 32.0f, 100.0f, 10.0f, 50);
-
-    CHECK(enemy.getHp() == 100.0f);
-    CHECK(enemy.getMaxHp() == 100.0f);
-    CHECK(enemy.getSpeed() == 10.0f);
-    CHECK(enemy.getGoldReward() == 50);
-    CHECK(enemy.getWaypointIndex() == 0);
-    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
-    CHECK_FALSE(enemy.isDead());
-}
-
-TEST_CASE("mecanica de dano, morte e excecoes") {
-    InimigoTeste enemy(0.0f, 0.0f, 32.0f, 32.0f, 100.0f, 10.0f, 50);
-
-    enemy.takeDamage(30.0f);
-    CHECK(enemy.getHp() == 70.0f);
-    CHECK_FALSE(enemy.isDead());
-
-    // Dano negativo lanca invalid_argument (checkpoint de excecoes)
-    CHECK_THROWS_AS(enemy.takeDamage(-10.0f), std::invalid_argument);
-    CHECK(enemy.getHp() == 70.0f);
-
-    // Dano letal
-    enemy.takeDamage(80.0f);
-    CHECK(enemy.getHp() == 0.0f);
-    CHECK(enemy.isDead());
-}
-
-TEST_CASE("movimentacao ao longo dos waypoints e distanceTravelled") {
-    InimigoTeste enemy(0.0f, 0.0f, 32.0f, 32.0f, 100.0f, 10.0f, 50);
-    std::vector<Vector2> waypoints = {
+TEST_CASE("inicializacao com path e valores validos (Doc 2)") {
+    std::vector<Vector2> path = {
+        Vector2(0.0f, 0.0f),
         Vector2(10.0f, 0.0f),
         Vector2(10.0f, 20.0f)
     };
 
-    CHECK_FALSE(enemy.hasReachedEnd(waypoints));
-    CHECK(enemy.getWaypointIndex() == 0);
-    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
+    DummyEnemyDoc2 enemy(path, 100.0f, 10.0f, 25, 15);
 
-    // Move 0.5s com velocidade 10 -> anda 5 unidades em direcao a (10, 0)
-    enemy.moveAlongPath(waypoints, 0.5f);
+    CHECK(enemy.getPosition().x == doctest::Approx(0.0f));
+    CHECK(enemy.getPosition().y == doctest::Approx(0.0f));
+    CHECK(enemy.getHp() == doctest::Approx(100.0f));
+    CHECK(enemy.getMaxHp() == doctest::Approx(100.0f));
+    CHECK(enemy.getSpeed() == doctest::Approx(10.0f));
+    CHECK(enemy.getReward() == 25);
+    CHECK(enemy.getDamageToRoot() == 15);
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
+    CHECK(enemy.getWaypointIndex() == 1);
+    CHECK_FALSE(enemy.isDead());
+    CHECK_FALSE(enemy.hasReachedEnd());
+}
+
+TEST_CASE("validacao de excecoes no construtor de Enemy (Doc 2 p. 29)") {
+    std::vector<Vector2> validPath = {Vector2(0.0f, 0.0f), Vector2(10.0f, 0.0f)};
+    std::vector<Vector2> emptyPath;
+    std::vector<Vector2> onePointPath = {Vector2(0.0f, 0.0f)};
+
+    // Caminho com menos de 2 pontos
+    CHECK_THROWS_AS(DummyEnemyDoc2(emptyPath, 100.0f, 10.0f, 20, 10), std::invalid_argument);
+    CHECK_THROWS_AS(DummyEnemyDoc2(onePointPath, 100.0f, 10.0f, 20, 10), std::invalid_argument);
+
+    // Vida <= 0
+    CHECK_THROWS_AS(DummyEnemyDoc2(validPath, 0.0f, 10.0f, 20, 10), std::invalid_argument);
+    CHECK_THROWS_AS(DummyEnemyDoc2(validPath, -10.0f, 10.0f, 20, 10), std::invalid_argument);
+
+    // Velocidade <= 0
+    CHECK_THROWS_AS(DummyEnemyDoc2(validPath, 100.0f, 0.0f, 20, 10), std::invalid_argument);
+    CHECK_THROWS_AS(DummyEnemyDoc2(validPath, 100.0f, -5.0f, 20, 10), std::invalid_argument);
+
+    // Recompensa < 0 (0 e permitido)
+    CHECK_NOTHROW(DummyEnemyDoc2(validPath, 100.0f, 10.0f, 0, 10));
+    CHECK_THROWS_AS(DummyEnemyDoc2(validPath, 100.0f, 10.0f, -1, 10), std::invalid_argument);
+
+    // Dano ao /root <= 0
+    CHECK_THROWS_AS(DummyEnemyDoc2(validPath, 100.0f, 10.0f, 20, 0), std::invalid_argument);
+    CHECK_THROWS_AS(DummyEnemyDoc2(validPath, 100.0f, 10.0f, 20, -5), std::invalid_argument);
+}
+
+TEST_CASE("takeDamage, dano letal e excecao para dano negativo") {
+    std::vector<Vector2> path = {Vector2(0.0f, 0.0f), Vector2(10.0f, 0.0f)};
+    DummyEnemyDoc2 enemy(path, 100.0f, 10.0f, 20, 10);
+
+    enemy.takeDamage(30.0f);
+    CHECK(enemy.getHp() == doctest::Approx(70.0f));
+    CHECK_FALSE(enemy.isDead());
+
+    // Dano negativo lanca invalid_argument
+    CHECK_THROWS_AS(enemy.takeDamage(-5.0f), std::invalid_argument);
+    CHECK(enemy.getHp() == doctest::Approx(70.0f));
+
+    // Dano letal zera HP e marca como morto
+    enemy.takeDamage(80.0f);
+    CHECK(enemy.getHp() == doctest::Approx(0.0f));
+    CHECK(enemy.isDead());
+}
+
+TEST_CASE("movimentacao em Enemy::update e progressao de rota") {
+    std::vector<Vector2> path = {
+        Vector2(0.0f, 0.0f),
+        Vector2(10.0f, 0.0f),
+        Vector2(10.0f, 20.0f)
+    };
+
+    DummyEnemyDoc2 enemy(path, 100.0f, 10.0f, 20, 10);
+
+    // Move 0.5s a 10 u/s -> anda 5 unidades em direcao a (10, 0)
+    enemy.update(0.5f);
     CHECK(enemy.getPosition().x == doctest::Approx(5.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(0.0f));
-    CHECK(enemy.getWaypointIndex() == 0);
     CHECK(enemy.getDistanceTravelled() == doctest::Approx(5.0f));
+    CHECK_FALSE(enemy.hasReachedEnd());
 
-    // Move mais 0.5s -> chega exatamente em (10, 0) e avanca para o proximo waypoint
-    enemy.moveAlongPath(waypoints, 0.5f);
+    // Move mais 0.5s -> atinge (10, 0) e avanca para o proximo waypoint
+    enemy.update(0.5f);
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(0.0f));
-    CHECK(enemy.getWaypointIndex() == 1);
     CHECK(enemy.getDistanceTravelled() == doctest::Approx(10.0f));
-    CHECK_FALSE(enemy.hasReachedEnd(waypoints));
+    CHECK(enemy.getWaypointIndex() == 2);
+    CHECK_FALSE(enemy.hasReachedEnd());
 
     // Move 1.0s -> anda 10 unidades em direcao a (10, 20) -> chega em (10, 10)
-    enemy.moveAlongPath(waypoints, 1.0f);
+    enemy.update(1.0f);
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(10.0f));
-    CHECK(enemy.getWaypointIndex() == 1);
     CHECK(enemy.getDistanceTravelled() == doctest::Approx(20.0f));
 
-    // Move 1.0s -> chega ao fim da rota (10, 20)
-    enemy.moveAlongPath(waypoints, 1.0f);
+    // Move 1.0s -> atinge o fim do caminho (10, 20)
+    enemy.update(1.0f);
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(20.0f));
-    CHECK(enemy.getWaypointIndex() == 2);
     CHECK(enemy.getDistanceTravelled() == doctest::Approx(30.0f));
-    CHECK(enemy.hasReachedEnd(waypoints));
+    CHECK(enemy.hasReachedEnd());
 
-    // Movimentar apos alcancar o fim nao deve alterar nada
-    enemy.moveAlongPath(waypoints, 1.0f);
+    // Updates posteriores apos atingir o final nao alteram posicao
+    enemy.update(1.0f);
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(20.0f));
     CHECK(enemy.getDistanceTravelled() == doctest::Approx(30.0f));
 }
 
-TEST_CASE("movimentacao com tempo zero ou negativo nao altera posicao") {
-    InimigoTeste enemy(5.0f, 5.0f, 32.0f, 32.0f, 100.0f, 10.0f, 50);
-    std::vector<Vector2> waypoints = { Vector2(20.0f, 5.0f) };
+TEST_CASE("update com deltaTime <= 0 ou inimigo inativo/morto nao move") {
+    std::vector<Vector2> path = {Vector2(0.0f, 0.0f), Vector2(10.0f, 0.0f)};
+    DummyEnemyDoc2 enemy(path, 100.0f, 10.0f, 20, 10);
 
-    enemy.moveAlongPath(waypoints, 0.0f);
-    CHECK(enemy.getPosition().x == doctest::Approx(5.0f));
+    enemy.update(0.0f);
+    CHECK(enemy.getPosition().x == doctest::Approx(0.0f));
     CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
 
-    enemy.moveAlongPath(waypoints, -1.0f);
-    CHECK(enemy.getPosition().x == doctest::Approx(5.0f));
-    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
+    enemy.update(-1.0f);
+    CHECK(enemy.getPosition().x == doctest::Approx(0.0f));
+
+    enemy.setActive(false);
+    enemy.update(1.0f);
+    CHECK(enemy.getPosition().x == doctest::Approx(0.0f));
+
+    enemy.setActive(true);
+    enemy.takeDamage(100.0f);
+    enemy.update(1.0f);
+    CHECK(enemy.getPosition().x == doctest::Approx(0.0f));
 }
 
 } // TEST_SUITE("Enemy")

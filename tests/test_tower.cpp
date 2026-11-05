@@ -1,120 +1,229 @@
 ﻿#include <doctest/doctest.h>
-#include "Tower.hpp"
-#include "Enemy.hpp"
-#include "TargetPriority.hpp"
+
+#include <memory>
+#include <stdexcept>
 #include <vector>
 
-class TorreDummy : public Tower {
-public:
-    TorreDummy(float x, float y, float w, float h, float range, float dmg, float rate, int cost,
-               TargetPriority priority = TargetPriority::First)
-        : Tower(x, y, w, h, range, dmg, rate, cost, priority) {}
+#include "Cell.hpp"
+#include "Enemy.hpp"
+#include "Projectile.hpp"
+#include "TargetPriority.hpp"
+#include "Tower.hpp"
 
-    void attack(std::vector<Enemy*>&, std::vector<Projectile*>&, float) override {}
-};
+namespace {
 
-class InimigoDummy : public Enemy {
+class DummyTower : public Tower {
 public:
-    InimigoDummy(float x, float y, float hp, float speed = 10.0f, std::size_t waypointIdx = 0)
-        : Enemy(x, y, 32.0f, 32.0f, hp, speed, 20) {
-        _waypointIndex = waypointIdx;
+    int fireCount;
+    Enemy* lastTarget;
+
+    DummyTower(const Cell& cell, float range, float damage, float fireInterval, int cost)
+        : Tower(cell, range, damage, fireInterval, cost),
+          fireCount(0),
+          lastTarget(nullptr) {}
+
+    void testSetRange(float r) { setRange(r); }
+    void testSetDamage(float d) { setDamage(d); }
+    void testSetFireInterval(float i) { setFireInterval(i); }
+
+protected:
+    void fire(Enemy& target, const std::vector<Enemy*>& /*enemies*/,
+              std::vector<std::unique_ptr<Projectile> >& /*projectiles*/) override {
+        fireCount++;
+        lastTarget = &target;
+    }
+
+    void applyUpgrade() override {
+        setDamage(getDamage() + 5.0f);
     }
 };
+
+class DummyEnemy : public Enemy {
+public:
+    DummyEnemy(float x, float y, float hp = 100.0f, float distance = 0.0f)
+        : Enemy(x, y, 32.0f, 32.0f, hp, 10.0f, 20) {
+        _distanceTravelled = distance;
+    }
+};
+
+} // namespace
 
 TEST_SUITE("Tower") {
 
-TEST_CASE("construcao e getters basicos da Tower") {
-    TorreDummy torre(10.0f, 10.0f, 64.0f, 64.0f, 150.0f, 20.0f, 2.0f, 100);
+TEST_CASE("inicializacao com Cell e valores validos") {
+    Cell cell = {2, 3};
+    DummyTower tower(cell, 150.0f, 20.0f, 1.5f, 100);
 
-    CHECK(torre.getCost() == 100);
-    CHECK(torre.getLevel() == 1);
-    CHECK(torre.getDamage() == doctest::Approx(20.0f));
-    CHECK(torre.getRange() == doctest::Approx(150.0f));
-    CHECK(torre.getFireRate() == doctest::Approx(2.0f));
-    CHECK(torre.getCooldown() == doctest::Approx(0.0f));
-    CHECK(torre.canShoot() == true);
-    CHECK(torre.getTargetPriority() == TargetPriority::First);
+    CHECK(tower.getCell() == cell);
+    CHECK(tower.getPosition().x == doctest::Approx(2.0f));
+    CHECK(tower.getPosition().y == doctest::Approx(3.0f));
+    CHECK(tower.getRange() == doctest::Approx(150.0f));
+    CHECK(tower.getDamage() == doctest::Approx(20.0f));
+    CHECK(tower.getFireInterval() == doctest::Approx(1.5f));
+    CHECK(tower.getCost() == 100);
+    CHECK(tower.getLevel() == 1);
+    CHECK(tower.getCooldown() == doctest::Approx(0.0f));
+    CHECK(tower.getSellValue() == 50); // 50% de 100
+    CHECK(tower.canUpgrade() == true);
+    CHECK(tower.getTargetPriority() == TargetPriority::First);
 }
 
-TEST_CASE("upgrade da Tower aumenta atributos e custo") {
-    TorreDummy torre(0.0f, 0.0f, 64.0f, 64.0f, 100.0f, 40.0f, 1.0f, 100);
+TEST_CASE("tratamento de excecoes no construtor de Tower") {
+    Cell cell = {0, 0};
 
-    torre.upgrade();
-    CHECK(torre.getLevel() == 2);
-    CHECK(torre.getDamage() == doctest::Approx(50.0f));
-    CHECK(torre.getRange() == doctest::Approx(110.0f));
-    CHECK(torre.getCost() == 150);
+    // range <= 0
+    CHECK_THROWS_AS(DummyTower(cell, 0.0f, 10.0f, 1.0f, 100), std::invalid_argument);
+    CHECK_THROWS_AS(DummyTower(cell, -5.0f, 10.0f, 1.0f, 100), std::invalid_argument);
+
+    // damage <= 0
+    CHECK_THROWS_AS(DummyTower(cell, 10.0f, 0.0f, 1.0f, 100), std::invalid_argument);
+    CHECK_THROWS_AS(DummyTower(cell, 10.0f, -2.0f, 1.0f, 100), std::invalid_argument);
+
+    // fireInterval <= 0
+    CHECK_THROWS_AS(DummyTower(cell, 10.0f, 10.0f, 0.0f, 100), std::invalid_argument);
+    CHECK_THROWS_AS(DummyTower(cell, 10.0f, 10.0f, -1.0f, 100), std::invalid_argument);
+
+    // cost <= 0
+    CHECK_THROWS_AS(DummyTower(cell, 10.0f, 10.0f, 1.0f, 0), std::invalid_argument);
+    CHECK_THROWS_AS(DummyTower(cell, 10.0f, 10.0f, 1.0f, -50), std::invalid_argument);
 }
 
-TEST_CASE("deteccao de inimigos no raio de alcance") {
-    TorreDummy torre(0.0f, 0.0f, 32.0f, 32.0f, 50.0f, 10.0f, 1.0f, 100);
+TEST_CASE("tratamento de excecoes nos setters de Tower") {
+    Cell cell = {0, 0};
+    DummyTower tower(cell, 50.0f, 10.0f, 1.0f, 100);
 
-    InimigoDummy dentro(30.0f, 0.0f, 100.0f);
-    InimigoDummy naBorda(50.0f, 0.0f, 100.0f);
-    InimigoDummy fora(50.1f, 0.0f, 100.0f);
+    CHECK_THROWS_AS(tower.testSetRange(0.0f), std::invalid_argument);
+    CHECK_THROWS_AS(tower.testSetRange(-1.0f), std::invalid_argument);
 
-    CHECK(torre.isInRange(dentro));
-    CHECK(torre.isInRange(naBorda));
-    CHECK_FALSE(torre.isInRange(fora));
+    CHECK_THROWS_AS(tower.testSetDamage(0.0f), std::invalid_argument);
+    CHECK_THROWS_AS(tower.testSetDamage(-5.0f), std::invalid_argument);
+
+    CHECK_THROWS_AS(tower.testSetFireInterval(0.0f), std::invalid_argument);
+    CHECK_THROWS_AS(tower.testSetFireInterval(-0.5f), std::invalid_argument);
 }
 
-TEST_CASE("controle de cadencia e recarga (cooldown)") {
-    TorreDummy torre(0.0f, 0.0f, 32.0f, 32.0f, 100.0f, 10.0f, 2.0f, 100);
+TEST_CASE("upgrade da Tower e excecao de nivel maximo") {
+    Cell cell = {0, 0};
+    DummyTower tower(cell, 50.0f, 10.0f, 1.0f, 100);
 
-    CHECK(torre.canShoot());
+    // Nivel 1 -> 2
+    CHECK(tower.getLevel() == 1);
+    CHECK(tower.canUpgrade() == true);
+    tower.upgrade();
+    CHECK(tower.getLevel() == 2);
+    CHECK(tower.getDamage() == doctest::Approx(15.0f));
+    CHECK(tower.getUpgradeCost() == 150); // (100 * 2 * 3) / 4 = 150
+    // Investido: 100 + 75 = 175 -> sellValue = 175 / 2 = 87
+    CHECK(tower.getSellValue() == 87);
 
-    torre.resetCooldown();
-    CHECK_FALSE(torre.canShoot());
-    CHECK(torre.getCooldown() == doctest::Approx(0.5f));
+    // Nivel 2 -> 3 (MAX_LEVEL)
+    CHECK(tower.canUpgrade() == true);
+    tower.upgrade();
+    CHECK(tower.getLevel() == 3);
+    CHECK(tower.getDamage() == doctest::Approx(20.0f));
+    CHECK_FALSE(tower.canUpgrade());
 
-    torre.updateCooldown(0.2f);
-    CHECK_FALSE(torre.canShoot());
-    CHECK(torre.getCooldown() == doctest::Approx(0.3f));
-
-    torre.updateCooldown(0.3f);
-    CHECK(torre.canShoot());
-    CHECK(torre.getCooldown() == doctest::Approx(0.0f));
+    // Nivel 3 -> tentar upgrade lanca std::logic_error
+    CHECK_THROWS_AS(tower.upgrade(), std::logic_error);
 }
 
-TEST_CASE("selecao de alvos por TargetPriority") {
-    TorreDummy torre(0.0f, 0.0f, 32.0f, 32.0f, 100.0f, 10.0f, 1.0f, 100);
+TEST_CASE("verificacao de alcance isInRange") {
+    Cell cell = {0, 0};
+    DummyTower tower(cell, 10.0f, 10.0f, 1.0f, 100);
 
-    // Inimigos em diferentes posicoes, vidas e waypoints
-    InimigoDummy e1(20.0f, 0.0f, 50.0f, 10.0f, 1);
-    InimigoDummy e2(40.0f, 0.0f, 150.0f, 10.0f, 3);
-    InimigoDummy e3(10.0f, 0.0f, 20.0f, 10.0f, 2);
-    InimigoDummy fora(150.0f, 0.0f, 5.0f, 10.0f, 5);
+    DummyEnemy dentro(5.0f, 0.0f);
+    DummyEnemy naBorda(10.0f, 0.0f);
+    DummyEnemy fora(10.1f, 0.0f);
 
-    std::vector<Enemy*> lista = { &e1, &e2, &e3, &fora };
+    CHECK(tower.isInRange(dentro));
+    CHECK(tower.isInRange(naBorda));
+    CHECK_FALSE(tower.isInRange(fora));
+}
 
-    SUBCASE("Prioridade First escolhe o mais avancado nos waypoints") {
-        torre.setTargetPriority(TargetPriority::First);
-        CHECK(torre.selectTarget(lista) == &e2);
+TEST_CASE("controle de cooldown via update") {
+    Cell cell = {0, 0};
+    DummyTower tower(cell, 10.0f, 10.0f, 1.0f, 100);
+    DummyEnemy enemy(5.0f, 0.0f);
+    std::vector<Enemy*> enemies = {&enemy};
+    std::vector<std::unique_ptr<Projectile> > projectiles;
+
+    tower.tryAttack(enemies, projectiles);
+    CHECK(tower.getCooldown() == doctest::Approx(1.0f));
+
+    tower.update(0.4f);
+    CHECK(tower.getCooldown() == doctest::Approx(0.6f));
+
+    tower.update(0.6f);
+    CHECK(tower.getCooldown() == doctest::Approx(0.0f));
+
+    // update extra nao deixa cooldown negativo
+    tower.update(0.5f);
+    CHECK(tower.getCooldown() == doctest::Approx(0.0f));
+}
+
+TEST_CASE("tryAttack segue Template Method") {
+    Cell cell = {0, 0};
+    DummyTower tower(cell, 10.0f, 10.0f, 2.0f, 100);
+    std::vector<std::unique_ptr<Projectile> > projectiles;
+
+    SUBCASE("Sem inimigos no alcance nao dispara e mantem cooldown zerado") {
+        DummyEnemy fora(50.0f, 0.0f);
+        std::vector<Enemy*> enemies = {&fora};
+
+        tower.tryAttack(enemies, projectiles);
+        CHECK(tower.fireCount == 0);
+        CHECK(tower.getCooldown() == doctest::Approx(0.0f));
+    }
+
+    SUBCASE("Com inimigo no alcance dispara e define cooldown") {
+        DummyEnemy dentro(5.0f, 0.0f);
+        std::vector<Enemy*> enemies = {&dentro};
+
+        tower.tryAttack(enemies, projectiles);
+        CHECK(tower.fireCount == 1);
+        CHECK(tower.lastTarget == &dentro);
+        CHECK(tower.getCooldown() == doctest::Approx(2.0f));
+
+        // Segundo tryAttack imediato nao atira pois cooldown > 0
+        tower.tryAttack(enemies, projectiles);
+        CHECK(tower.fireCount == 1);
+    }
+}
+
+TEST_CASE("selecao de alvo por TargetPriority") {
+    Cell cell = {0, 0};
+    DummyTower tower(cell, 50.0f, 10.0f, 1.0f, 100);
+    std::vector<std::unique_ptr<Projectile> > projectiles;
+
+    DummyEnemy e1(20.0f, 0.0f, 50.0f, 10.0f);  // HP 50, distTravelled 10, distTorre 20
+    DummyEnemy e2(40.0f, 0.0f, 150.0f, 30.0f); // HP 150, distTravelled 30, distTorre 40
+    DummyEnemy e3(10.0f, 0.0f, 20.0f, 20.0f);  // HP 20, distTravelled 20, distTorre 10
+    DummyEnemy fora(100.0f, 0.0f, 5.0f, 50.0f); // Fora do alcance
+
+    std::vector<Enemy*> enemies = {&e1, &e2, &e3, &fora};
+
+    SUBCASE("Prioridade First escolhe o que percorreu maior distancia no caminho") {
+        tower.setTargetPriority(TargetPriority::First);
+        tower.tryAttack(enemies, projectiles);
+        CHECK(tower.lastTarget == &e2);
     }
 
     SUBCASE("Prioridade Strongest escolhe o com mais HP") {
-        torre.setTargetPriority(TargetPriority::Strongest);
-        CHECK(torre.selectTarget(lista) == &e2);
+        tower.setTargetPriority(TargetPriority::Strongest);
+        tower.tryAttack(enemies, projectiles);
+        CHECK(tower.lastTarget == &e2);
     }
 
     SUBCASE("Prioridade Weakest escolhe o com menos HP") {
-        torre.setTargetPriority(TargetPriority::Weakest);
-        CHECK(torre.selectTarget(lista) == &e3);
+        tower.setTargetPriority(TargetPriority::Weakest);
+        tower.tryAttack(enemies, projectiles);
+        CHECK(tower.lastTarget == &e3);
     }
 
     SUBCASE("Prioridade Closest escolhe o mais proximo da torre") {
-        torre.setTargetPriority(TargetPriority::Closest);
-        CHECK(torre.selectTarget(lista) == &e3);
-    }
-
-    SUBCASE("Retorna nullptr quando nao ha nenhum inimigo no alcance ou todos mortos") {
-        std::vector<Enemy*> vazia;
-        CHECK(torre.selectTarget(vazia) == nullptr);
-
-        e1.takeDamage(100.0f);
-        e2.takeDamage(200.0f);
-        e3.takeDamage(50.0f);
-        CHECK(torre.selectTarget(lista) == nullptr);
+        tower.setTargetPriority(TargetPriority::Closest);
+        tower.tryAttack(enemies, projectiles);
+        CHECK(tower.lastTarget == &e3);
     }
 }
 

@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include <limits>
 #include <stdexcept>
 
 #include "Enemy.hpp"
@@ -37,6 +38,14 @@ TEST_CASE_FIXTURE(ProjectileTest, "rejects non-positive speed or damage") {
     CHECK_THROWS_AS(
         Projectile(Vector2{0.0f, 0.0f}, target, 1.0f, -1.0f),
         std::invalid_argument);
+    CHECK_THROWS_AS(
+        Projectile(Vector2{0.0f, 0.0f}, target,
+                   std::numeric_limits<float>::quiet_NaN(), 10.0f),
+        std::invalid_argument);
+    CHECK_THROWS_AS(
+        Projectile(Vector2{0.0f, 0.0f}, target, 1.0f,
+                   std::numeric_limits<float>::infinity()),
+        std::invalid_argument);
 
     CHECK_NOTHROW(Projectile(Vector2{0.0f, 0.0f}, target, 1.0f, 10.0f));
 }
@@ -67,6 +76,14 @@ TEST_CASE_FIXTURE(ProjectileTest, "updates speed and damage through setters") {
     CHECK_THROWS_AS(projectile.setSpeed(-1.0f), std::invalid_argument);
     CHECK_THROWS_AS(projectile.setDamage(0.0f), std::invalid_argument);
     CHECK_THROWS_AS(projectile.setDamage(-1.0f), std::invalid_argument);
+    CHECK_THROWS_AS(
+        projectile.setSpeed(std::numeric_limits<float>::infinity()),
+        std::invalid_argument);
+    CHECK_THROWS_AS(
+        projectile.setDamage(std::numeric_limits<float>::quiet_NaN()),
+        std::invalid_argument);
+    CHECK(projectile.getSpeed() == doctest::Approx(3.5f));
+    CHECK(projectile.getDamage() == doctest::Approx(25.5f));
 }
 
 TEST_CASE_FIXTURE(ProjectileTest, "moves toward its target according to speed and elapsed time") {

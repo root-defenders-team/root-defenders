@@ -18,8 +18,10 @@ Projectile::Projectile(const Vector2& startPosition, Enemy& target,
       speed_(speed),
       damage_(damage),
       impacted_(false) {
-    if (speed_ <= 0.0f || damage_ <= 0.0f) {
-        throw std::invalid_argument("A velocidade e o dano devem ser positivos.");
+    if (!std::isfinite(speed_) || speed_ <= 0.0f ||
+        !std::isfinite(damage_) || damage_ <= 0.0f) {
+        throw std::invalid_argument(
+            "A velocidade e o dano devem ser positivos e finitos.");
     }
 }
 
@@ -89,16 +91,17 @@ float Projectile::getDamage() const {
 }
 
 void Projectile::setSpeed(float newSpeed) {
-    if (newSpeed <= 0.0f) {
-        throw std::invalid_argument("A velocidade deve ser positiva.");
+    if (!std::isfinite(newSpeed) || newSpeed <= 0.0f) {
+        throw std::invalid_argument(
+            "A velocidade deve ser positiva e finita.");
     }
 
     speed_ = newSpeed;
 }
 
 void Projectile::setDamage(float newDamage) {
-    if (newDamage <= 0.0f) {
-        throw std::invalid_argument("O dano deve ser positivo.");
+    if (!std::isfinite(newDamage) || newDamage <= 0.0f) {
+        throw std::invalid_argument("O dano deve ser positivo e finito.");
     }
 
     damage_ = newDamage;

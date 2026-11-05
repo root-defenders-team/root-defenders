@@ -18,21 +18,11 @@ public:
      */
     explicit RootkitEnemy(const std::vector<Vector2>& path);
 
-    /** @brief Avança pelo caminho de acordo com deltaTime. */
-    void update(float deltaTime) override;
-
     /** @brief Retorna o símbolo 'r'. */
     char getSymbol() const;
 
     /** @brief Aplica a blindagem, reduzindo o dano recebido em 3, mínimo 1. */
-    void takeDamage(float amount);
-
-    /** @brief Retorna o dano causado ao /root ao completar o caminho. */
-    int getDamageToRoot() const;
-
-private:
-    const std::vector<Vector2>& path_; ///< Caminho não proprietário do mapa.
-    int damageToRoot_;
+    void takeDamage(float amount) override;
 };
 
 #endif // ROOTKIT_ENEMY_HPP

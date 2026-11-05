@@ -18,18 +18,8 @@ public:
      */
     explicit VirusEnemy(const std::vector<Vector2>& path);
 
-    /** @brief Avança pelo caminho de acordo com deltaTime. */
-    void update(float deltaTime) override;
-
     /** @brief Retorna o símbolo 'v'. */
     char getSymbol() const;
-
-    /** @brief Retorna o dano causado ao /root ao completar o caminho. */
-    int getDamageToRoot() const;
-
-private:
-    const std::vector<Vector2>& path_; ///< Caminho não proprietário do mapa.
-    int damageToRoot_;
 };
 
 #endif // VIRUS_ENEMY_HPP

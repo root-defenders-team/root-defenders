@@ -1,109 +1,132 @@
 ﻿#ifndef TOWER_HPP
 #define TOWER_HPP
 
+#include <memory>
+#include <vector>
+
+#include "Cell.hpp"
 #include "Entity.hpp"
 #include "TargetPriority.hpp"
-#include <vector>
 
 class Enemy;
 class Projectile;
 
 /**
- * @brief Classe abstrata base para todas as torres defensivas do jogo.
- * 
- * Herda de Entity e gerencia os atributos e comportamentos comuns de combate,
- * como alcance, dano, cadência de tiro, recarga, mira e melhorias.
+ * @brief Classe abstrata base para todas as defesas (torres) do jogo.
+ *
+ * Herda de Entity e implementa a lógica comum de alcance, dano, intervalo de disparo,
+ * recarga (cooldown), evolução (upgrade), valor de venda e mira (TargetPriority).
  */
 class Tower : public Entity {
-protected:
-    float _range;                   ///< Raio de alcance da torre.
-    float _damage;                  ///< Dano base infligido pelos disparos.
-    float _fireRate;                ///< Cadência de tiro (disparos por segundo).
-    float _fireCooldown;            ///< Temporizador interno para controlar o intervalo entre tiros.
-    int _cost;                      ///< Custo em ouro para construir ou melhorar a torre.
-    int _level;                     ///< Nível atual da torre.
-    TargetPriority _targetPriority; ///< Critério de prioridade para seleção de alvos.
-
 public:
-    /**
-     * @brief Construtor da classe Tower.
-     * @param startX Posição X inicial no mapa.
-     * @param startY Posição Y inicial no mapa.
-     * @param width Largura da torre.
-     * @param height Altura da torre.
-     * @param range Alcance de ataque.
-     * @param damage Dano dos disparos.
-     * @param fireRate Cadência de tiros (disparos por segundo).
-     * @param cost Custo da torre.
-     * @param priority Critério de seleção de alvo (padrão: First).
-     */
-    Tower(float startX, float startY, float width, float height, 
-          float range, float damage, float fireRate, int cost,
-          TargetPriority priority = TargetPriority::First);
+    static const int MAX_LEVEL = 3; ///< Nível máximo que uma defesa pode atingir.
 
     /**
-     * @brief Destrutor virtual da torre.
+     * @brief Constrói uma defesa na célula indicada.
+     * @param cell Célula da grade onde a torre está instalada.
+     * @param range Alcance de ataque em unidades de distância.
+     * @param damage Dano base por disparo.
+     * @param fireInterval Intervalo mínimo entre disparos (em segundos).
+     * @param cost Custo de compra da defesa em CPU.
+     * @throws std::invalid_argument se range <= 0, damage <= 0, fireInterval <= 0 ou cost <= 0.
      */
+    Tower(const Cell& cell, float range, float damage, float fireInterval, int cost);
+
     virtual ~Tower() = default;
 
     /**
-     * @brief Atualiza temporizadores internos da torre (ex: recarga).
-     * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
+     * @brief Atualiza a defesa a cada tick, reduzindo o cooldown de disparo.
+     * @param deltaTime Tempo decorrido em segundos.
      */
-    virtual void update(float deltaTime) override;
+    void update(float deltaTime) override;
 
     /**
-     * @brief Método virtual puro para o ataque polimórfico.
-     * @param enemies Referência para o vetor de inimigos ativos no mapa.
-     * @param projectiles Referência para o vetor de projéteis ativos no jogo.
-     * @param deltaTime Tempo decorrido desde o último frame.
+     * @brief Tenta atacar os inimigos seguindo o padrão Template Method.
+     *
+     * 1. Se cooldown > 0, não faz nada.
+     * 2. selectTarget escolhe o alvo no alcance conforme a TargetPriority.
+     * 3. Se não houver alvo no alcance, retorna sem reiniciar o cooldown.
+     * 4. Se houver alvo, chama o método protegido fire(...) e faz cooldown = fireInterval.
+     *
+     * @param enemies Lista de inimigos ativos no mapa.
+     * @param projectiles Lista de projéteis ativos onde novos disparos são inseridos.
      */
-    virtual void attack(std::vector<Enemy*>& enemies, std::vector<Projectile*>& projectiles, float deltaTime) = 0;
+    void tryAttack(const std::vector<Enemy*>& enemies,
+                   std::vector<std::unique_ptr<Projectile> >& projectiles);
 
     /**
-     * @brief Realiza a melhoria (upgrade) da torre, aumentando seus atributos.
-     */
-    virtual void upgrade();
-
-    /**
-     * @brief Verifica se um inimigo está dentro do raio de alcance da torre.
-     * @param enemy Inimigo a ser verificado.
+     * @brief Verifica se um inimigo está dentro do raio de alcance da defesa.
+     * @param enemy Inimigo a verificar.
      * @return true se a distância for menor ou igual ao alcance.
      */
     bool isInRange(const Enemy& enemy) const;
 
     /**
-     * @brief Verifica se a torre está pronta para disparar (cooldown zerado).
+     * @brief Verifica se a defesa pode receber evolução (nível < MAX_LEVEL).
+     * @return true se puder evoluir.
      */
-    bool canShoot() const;
+    bool canUpgrade() const;
 
     /**
-     * @brief Atualiza o temporizador de recarga.
-     * @param deltaTime Tempo decorrido em segundos.
+     * @brief Realiza a evolução da defesa para o próximo nível.
+     * @throws std::logic_error se a defesa já estiver no nível máximo.
      */
-    void updateCooldown(float deltaTime);
+    void upgrade();
 
     /**
-     * @brief Reinicia o temporizador de recarga após um disparo.
+     * @brief Retorna o custo para evoluir do nível atual para o próximo.
+     * Fórmula: (cost * level * 3) / 4.
+     * @return Custo de evolução em CPU.
      */
-    void resetCooldown();
+    int getUpgradeCost() const;
 
     /**
-     * @brief Seleciona o melhor alvo dentre os inimigos ativos segundo o critério de prioridade.
-     * @param enemies Lista de ponteiros para inimigos ativos no mapa.
-     * @return Ponteiro para o inimigo escolhido ou nullptr se nenhum estiver no alcance.
+     * @brief Retorna o valor de reembolso ao vender a defesa (50% de tudo investido).
+     * @return Valor de venda em CPU.
      */
-    Enemy* selectTarget(const std::vector<Enemy*>& enemies) const;
+    int getSellValue() const;
 
-    // Getters e Setters públicos (Encapsulamento)
+    Cell getCell() const;
     float getRange() const;
     float getDamage() const;
+    float getFireInterval() const;
+    float getCooldown() const;
     int getCost() const;
     int getLevel() const;
-    float getFireRate() const;
-    float getCooldown() const;
     TargetPriority getTargetPriority() const;
-    void setTargetPriority(TargetPriority priority);
+    void setTargetPriority(TargetPriority newPriority);
+
+protected:
+    /**
+     * @brief Método virtual puro chamado por tryAttack para disparar contra o alvo.
+     * @param target Inimigo selecionado para ataque.
+     * @param enemies Lista de inimigos ativos no mapa.
+     * @param projectiles Lista de projéteis onde o novo projétil deve ser adicionado.
+     */
+    virtual void fire(Enemy& target, const std::vector<Enemy*>& enemies,
+                      std::vector<std::unique_ptr<Projectile> >& projectiles) = 0;
+
+    /**
+     * @brief Método virtual puro para aplicar bônus específicos da subclasse ao evoluir.
+     */
+    virtual void applyUpgrade() = 0;
+
+    void setRange(float newRange);
+    void setDamage(float newDamage);
+    void setFireInterval(float newFireInterval);
+
+private:
+    Enemy* selectTarget(const std::vector<Enemy*>& enemies) const;
+
+    Cell cell;
+    float range;
+    float damage;
+    float fireInterval;
+    float cooldown;
+    int cost;
+    int level;
+    int investedGold;
+    TargetPriority targetPriority;
 };
 
 #endif // TOWER_HPP

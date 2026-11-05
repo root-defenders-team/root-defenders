@@ -1,4 +1,4 @@
-#include "Entity.hpp"
+﻿#include "Entity.hpp"
 
 #include <stdexcept>
 
@@ -35,8 +35,4 @@ Vector2 Entity::getPosition() const {
 
 void Entity::setPosition(const Vector2& newPosition) {
     position = newPosition;
-}
-
-char Entity::getSymbol() const {
-    return ' ';
 }

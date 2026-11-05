@@ -3,105 +3,98 @@
 
 #include "Entity.hpp"
 #include "Vector2.hpp"
-#include <vector>
+
 #include <cstddef>
+#include <vector>
 
 /**
- * @brief Classe abstrata base para todos os inimigos do jogo.
- * 
+ * @brief Classe abstrata base para todos os malwares (inimigos) do jogo.
+ *
  * Herda de Entity e gerencia pontos de vida (HP), velocidade de deslocamento,
- * recompensas e o rastreamento da rota de waypoints.
+ * recompensa em CPU, dano causado ao /root e rastreamento da rota de waypoints.
  */
 class Enemy : public Entity {
-protected:
-    float _hp;                  ///< Pontos de vida atuais do inimigo.
-    float _maxHp;               ///< Pontos de vida máximos.
-    float _speed;               ///< Velocidade de deslocamento no mapa (unidades por segundo).
-    int _goldReward;            ///< Recompensa em ouro concedida ao ser derrotado.
-    std::size_t _waypointIndex; ///< Índice atual do waypoint que o inimigo está perseguindo.
-    float _distanceTravelled;   ///< Distância total percorrida pelo inimigo no caminho.
-
 public:
     /**
-     * @brief Construtor da classe Enemy.
-     * @param startX Posição X inicial.
-     * @param startY Posição Y inicial.
-     * @param width Largura do inimigo.
-     * @param height Altura do inimigo.
-     * @param hp Pontos de vida iniciais.
-     * @param speed Velocidade de movimento.
-     * @param goldReward Ouro obtido ao derrotar.
+     * @brief Construtor da classe Enemy conforme o Documento Técnico (Doc 2, pág. 11).
+     * @param path Referência para a rota de waypoints mantida pelo mapa.
+     * @param maxHp Pontos de vida máximos iniciais.
+     * @param speed Velocidade de deslocamento (unidades por segundo).
+     * @param reward Recompensa em CPU concedida ao ser destruído.
+     * @param damageToRoot Dano causado ao /root ao atingir o final do caminho.
+     * @throws std::invalid_argument se path tiver menos de 2 pontos,
+     *         ou se maxHp <= 0, speed <= 0, reward < 0 ou damageToRoot <= 0.
      */
-    Enemy(float startX, float startY, float width, float height, 
-          float hp, float speed, int goldReward);
+    Enemy(const std::vector<Vector2>& path, float maxHp, float speed,
+          int reward, int damageToRoot);
 
     /**
-     * @brief Destrutor virtual do inimigo.
+     * @brief Construtor legado mantido para compatibilidade transitória com testes de torres.
      */
+    Enemy(float startX, float startY, float width, float height,
+          float hp, float speed, int goldReward);
+
     virtual ~Enemy() = default;
 
     /**
-     * @brief Atualiza a lógica interna do inimigo a cada ciclo.
-     * @param deltaTime Tempo decorrido desde a última atualização.
-     */
-    virtual void update(float deltaTime) override;
-
-    /**
-     * @brief Movimenta o inimigo seguindo a lista de waypoints do caminho.
-     * @param waypoints Lista sequencial de pontos do caminho.
+     * @brief Atualiza a posição do inimigo ao longo do caminho.
+     * Anda speed * deltaTime em direção ao próximo ponto e acumula distanceTravelled.
      * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
      */
-    void moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime);
+    void update(float deltaTime) override;
 
     /**
      * @brief Aplica dano ao inimigo (reduz seu HP).
+     * Declarado como virtual para permitir blindagem polimórfica (ex: RootkitEnemy).
      * @param amount Quantidade de dano recebido.
+     * @throws std::invalid_argument se amount for negativo.
      */
-    void takeDamage(float amount);
+    virtual void takeDamage(float amount);
 
     /**
      * @brief Verifica se o inimigo foi derrotado (HP <= 0).
-     * @return true se estiver morto, false caso contrário.
      */
     bool isDead() const;
 
     /**
-     * @brief Obtém a recompensa em ouro por derrotar o inimigo.
-     * @return Quantidade de ouro.
+     * @brief Verifica se o inimigo alcançou o final da rota de waypoints.
+     * @return true se atingiu o último waypoint.
      */
-    int getGoldReward() const;
+    bool hasReachedEnd() const;
 
     /**
-     * @brief Obtém os pontos de vida atuais.
-     */
-    float getHp() const;
-
-    /**
-     * @brief Obtém os pontos de vida máximos.
-     */
-    float getMaxHp() const;
-
-    /**
-     * @brief Obtém a velocidade de movimento.
-     */
-    float getSpeed() const;
-
-    /**
-     * @brief Obtém o índice do waypoint atual que o inimigo está perseguindo.
-     */
-    std::size_t getWaypointIndex() const;
-
-    /**
-     * @brief Obtém a distância total percorrida pelo inimigo.
-     */
-    float getDistanceTravelled() const;
-
-    /**
-     * @brief Verifica se o inimigo chegou ao final da rota de waypoints.
-     * @param waypoints Lista de posições que formam o caminho.
-     * @return true se atingiu o destino final.
+     * @brief Sobrecarga legada com parâmetro para compatibilidade transitória.
      */
     bool hasReachedEnd(const std::vector<Vector2>& waypoints) const;
+
+    /**
+     * @brief Método legado de compatibilidade transitória.
+     */
+    void moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime);
+
+    float getHp() const;
+    float getMaxHp() const;
+    float getSpeed() const;
+    int getReward() const;
+    int getDamageToRoot() const;
+    float getDistanceTravelled() const;
+    std::size_t getWaypointIndex() const;
+
+    // Alias legado de compatibilidade
+    int getGoldReward() const;
+
+protected:
+    const std::vector<Vector2>& path; ///< Rota mantida pelo mapa (não proprietária).
+    float hp;                         ///< Pontos de vida atuais.
+    float maxHp;                      ///< Pontos de vida máximos.
+    float speed;                      ///< Velocidade de movimento.
+    int reward;                       ///< Recompensa em CPU.
+    int damageToRoot;                 ///< Dano causado ao /root.
+    std::size_t waypointIndex;        ///< Próximo waypoint a alcançar.
+    float distanceTravelled;          ///< Distância percorrida acumulada.
+
+private:
+    std::vector<Vector2> fallbackPath_; ///< Usado quando chamado pelo construtor legado.
 };
 
 #endif // ENEMY_HPP

@@ -1,4 +1,4 @@
-﻿#include <doctest/doctest.h>
+#include <doctest/doctest.h>
 
 #include <memory>
 #include <stdexcept>
@@ -42,7 +42,7 @@ class DummyEnemy : public Enemy {
 public:
     DummyEnemy(float x, float y, float hp = 100.0f, float distance = 0.0f)
         : Enemy(x, y, 32.0f, 32.0f, hp, 10.0f, 20) {
-        _distanceTravelled = distance;
+        distanceTravelled = distance;
     }
 };
 

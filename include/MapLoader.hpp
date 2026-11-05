@@ -4,6 +4,7 @@
 #include <istream>
 #include <string>
 
+#include "FileFormatException.hpp"
 #include "Map.hpp"
 
 /**
@@ -11,6 +12,8 @@
  *
  * O arquivo usa '.' para área construível, '#' para caminho, 'X' para
  * obstáculo, 'E' para a entrada dos inimigos e '@' para o destino final.
+ * O caminho deve ser único, contínuo e sem bifurcações. Os erros informam
+ * a origem e a linha do problema por FileFormatException.
  */
 class MapLoader {
 public:
@@ -18,7 +21,7 @@ public:
      * @brief Abre um arquivo de mapa e o converte em Map.
      * @param filePath Caminho do arquivo de mapa.
      * @return Mapa criado a partir do arquivo.
-     * @throws std::runtime_error se o arquivo não puder ser lido ou for inválido.
+     * @throws FileFormatException se o arquivo não puder ser lido ou for inválido.
      */
     static Map load(const std::string& filePath);
 
@@ -27,7 +30,7 @@ public:
      * @param input Texto do mapa já aberto.
      * @param sourceName Nome usado nas mensagens de erro.
      * @return Mapa criado a partir da entrada.
-     * @throws std::runtime_error se o formato do mapa for inválido.
+     * @throws FileFormatException se a leitura falhar ou o mapa for inválido.
      */
     static Map parse(std::istream& input, const std::string& sourceName);
 };

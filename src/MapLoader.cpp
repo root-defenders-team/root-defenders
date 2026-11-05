@@ -1,16 +1,9 @@
 #include "MapLoader.hpp"
 
 #include <fstream>
-#include <stdexcept>
 #include <vector>
 
 namespace {
-
-std::runtime_error formatError(const std::string& sourceName, int lineNumber,
-                               const std::string& message) {
-    return std::runtime_error(sourceName + ", linha " +
-                              std::to_string(lineNumber) + ": " + message);
-}
 
 void removeCarriageReturn(std::string& line) {
     if (!line.empty() && line[line.size() - 1] == '\r') {
@@ -53,13 +46,13 @@ void addPathWaypoints(Map& map, const Cell& entry, const Cell& destination,
         }
 
         if (nextCount == 0) {
-            throw formatError(sourceName, current.y + 1,
-                              "caminho interrompido.");
+            throw FileFormatException(sourceName, current.y + 1,
+                                      "caminho interrompido.");
         }
 
         if (nextCount > 1) {
-            throw formatError(sourceName, current.y + 1,
-                              "caminho com bifurcacao.");
+            throw FileFormatException(sourceName, current.y + 1,
+                                      "caminho com bifurcacao.");
         }
 
         current = next;
@@ -72,8 +65,8 @@ void addPathWaypoints(Map& map, const Cell& entry, const Cell& destination,
             Cell cell = {static_cast<int>(x), static_cast<int>(y)};
 
             if (map.isPath(cell) && !visited[y][x]) {
-                throw formatError(sourceName, static_cast<int>(y) + 1,
-                                  "caminho desconectado.");
+                throw FileFormatException(sourceName, static_cast<int>(y) + 1,
+                                          "caminho desconectado.");
             }
         }
     }
@@ -85,7 +78,7 @@ Map MapLoader::load(const std::string& filePath) {
     std::ifstream file(filePath.c_str());
 
     if (!file.is_open()) {
-        throw formatError(filePath, 0, "nao foi possivel abrir o arquivo.");
+        throw FileFormatException(filePath, 0, "nao foi possivel abrir o arquivo.");
     }
 
     return parse(file, filePath);
@@ -102,28 +95,31 @@ Map MapLoader::parse(std::istream& input, const std::string& sourceName) {
         removeCarriageReturn(line);
 
         if (line.empty()) {
-            throw formatError(sourceName, lineNumber, "linha vazia.");
+            throw FileFormatException(sourceName, lineNumber, "linha vazia.");
         }
 
         if (width == 0) {
             width = line.size();
         } else if (line.size() != width) {
-            throw formatError(sourceName, lineNumber,
-                              "todas as linhas devem ter o mesmo tamanho.");
+            throw FileFormatException(sourceName, lineNumber,
+                                      "todas as linhas devem ter o mesmo tamanho.");
         }
 
         lines.push_back(line);
     }
 
+    if (input.bad() || (input.fail() && !input.eof())) {
+        throw FileFormatException(sourceName, lineNumber + 1,
+                                  "falha ao ler o mapa.");
+    }
+
     if (lines.empty()) {
-        throw formatError(sourceName, 0, "arquivo de mapa vazio.");
+        throw FileFormatException(sourceName, 0, "arquivo de mapa vazio.");
     }
 
     Map map(width, lines.size());
     Cell entry = {-1, -1};
     Cell destination = {-1, -1};
-    int entryCount = 0;
-    int destinationCount = 0;
 
     for (std::size_t y = 0; y < lines.size(); ++y) {
         for (std::size_t x = 0; x < lines[y].size(); ++x) {
@@ -132,30 +128,36 @@ Map MapLoader::parse(std::istream& input, const std::string& sourceName) {
 
             if (symbol != '.' && symbol != '#' && symbol != 'X' &&
                 symbol != 'E' && symbol != '@') {
-                throw formatError(sourceName, static_cast<int>(y) + 1,
-                                  "caractere desconhecido.");
+                throw FileFormatException(sourceName, static_cast<int>(y) + 1,
+                                          "caractere desconhecido.");
             }
 
             setCellType(map, cell, symbol);
 
             if (symbol == 'E') {
+                if (entry.x != -1) {
+                    throw FileFormatException(sourceName, static_cast<int>(y) + 1,
+                                              "o mapa deve possuir uma unica entrada.");
+                }
                 entry = cell;
-                ++entryCount;
             }
 
             if (symbol == '@') {
+                if (destination.x != -1) {
+                    throw FileFormatException(sourceName, static_cast<int>(y) + 1,
+                                              "o mapa deve possuir um unico destino.");
+                }
                 destination = cell;
-                ++destinationCount;
             }
         }
     }
 
-    if (entryCount != 1) {
-        throw formatError(sourceName, 0, "o mapa deve possuir uma unica entrada.");
+    if (entry.x == -1) {
+        throw FileFormatException(sourceName, 0, "o mapa deve possuir uma entrada.");
     }
 
-    if (destinationCount != 1) {
-        throw formatError(sourceName, 0, "o mapa deve possuir um unico destino.");
+    if (destination.x == -1) {
+        throw FileFormatException(sourceName, 0, "o mapa deve possuir um destino.");
     }
 
     addPathWaypoints(map, entry, destination, sourceName);

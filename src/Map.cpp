@@ -77,10 +77,15 @@ void Map::addWaypoint(const Cell& waypoint) {
     }
 
     waypoints_.push_back(waypoint);
+    path_.push_back(waypoint.toVector2());
 }
 
 const std::vector<Cell>& Map::getWaypoints() const {
     return waypoints_;
+}
+
+const std::vector<Vector2>& Map::getPath() const {
+    return path_;
 }
 
 bool Map::hasPath() const {

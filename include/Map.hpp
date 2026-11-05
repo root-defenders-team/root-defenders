@@ -103,6 +103,15 @@ public:
     const std::vector<Cell>& getWaypoints() const;
 
     /**
+     * @brief Retorna a rota dos inimigos em coordenadas contínuas.
+     *
+     * Cada waypoint adicionado também é armazenado como Vector2. A referência
+     * permanece válida enquanto este Map existir e não for substituído.
+     * @return Referência constante para a rota na ordem dos waypoints.
+     */
+    const std::vector<Vector2>& getPath() const;
+
+    /**
      * @brief Informa se a rota possui origem e destino.
      * @return true quando existem pelo menos dois waypoints.
      */
@@ -114,6 +123,7 @@ private:
     std::vector<std::vector<CellType> > cells_;
     std::vector<std::vector<bool> > occupiedCells_;
     std::vector<Cell> waypoints_;
+    std::vector<Vector2> path_;
 };
 
 #endif // MAP_HPP

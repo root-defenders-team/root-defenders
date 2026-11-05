@@ -84,4 +84,26 @@ TEST_CASE("stores valid waypoints in insertion order") {
     CHECK_THROWS_AS(map.addWaypoint({4, 0}), std::out_of_range);
 }
 
+TEST_CASE("converts waypoints to an enemy path") {
+    Map map(4, 4);
+    map.addWaypoint({0, 1});
+    map.addWaypoint({2, 1});
+    map.addWaypoint({2, 3});
+
+    const std::vector<Vector2>& path = map.getPath();
+
+    REQUIRE(path.size() == 3);
+    CHECK(path[0].x == 0.0f);
+    CHECK(path[0].y == 1.0f);
+    CHECK(path[1].x == 2.0f);
+    CHECK(path[1].y == 1.0f);
+    CHECK(path[2].x == 2.0f);
+    CHECK(path[2].y == 3.0f);
+
+    map.addWaypoint({1, 3});
+    REQUIRE(path.size() == 4);
+    CHECK(path[3].x == 1.0f);
+    CHECK(path[3].y == 3.0f);
+}
+
 } // TEST_SUITE("Map")

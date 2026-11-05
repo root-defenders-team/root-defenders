@@ -1,4 +1,4 @@
-﻿#ifndef ENTITY_HPP
+#ifndef ENTITY_HPP
 #define ENTITY_HPP
 
 #include "Vector2.hpp"
@@ -23,6 +23,7 @@ public:
      * @param startY Posição vertical inicial no mapa.
      * @param width Largura da entidade.
      * @param height Altura da entidade.
+     * @throws std::invalid_argument se width ou height forem menores ou iguais a zero.
      */
     Entity(float startX, float startY, float width, float height);
 
@@ -40,6 +41,12 @@ public:
      * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
      */
     virtual void update(float deltaTime) = 0;
+
+    /**
+     * @brief Retorna o caractere que representa a entidade no mapa.
+     * @return Caractere desenhado no mapa.
+     */
+    virtual char getSymbol() const;
 
     /**
      * @brief Permite verificações básicas de colisão entre entidades.

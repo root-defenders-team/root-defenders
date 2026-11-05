@@ -1,4 +1,6 @@
-﻿#include <doctest/doctest.h>
+#include <doctest/doctest.h>
+
+#include <stdexcept>
 
 #include "Entity.hpp"
 #include "Vector2.hpp"
@@ -69,6 +71,13 @@ TEST_CASE("does not detect collision when bounding boxes are separated") {
     CHECK_FALSE(e1.checkCollision(e2));
     CHECK_FALSE(e2.checkCollision(e1));
     CHECK_FALSE(e1.checkCollision(e3));
+}
+
+TEST_CASE("rejects non-positive width or height") {
+    CHECK_THROWS_AS(DummyEntity(0.0f, 0.0f, 0.0f, 10.0f), std::invalid_argument);
+    CHECK_THROWS_AS(DummyEntity(0.0f, 0.0f, -5.0f, 10.0f), std::invalid_argument);
+    CHECK_THROWS_AS(DummyEntity(0.0f, 0.0f, 10.0f, 0.0f), std::invalid_argument);
+    CHECK_THROWS_AS(DummyEntity(0.0f, 0.0f, 10.0f, -5.0f), std::invalid_argument);
 }
 
 } // TEST_SUITE("Entity")

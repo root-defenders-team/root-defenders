@@ -1,7 +1,16 @@
-﻿#include "Entity.hpp"
+#include "Entity.hpp"
+
+#include <stdexcept>
 
 Entity::Entity(float startX, float startY, float width, float height)
     : position(startX, startY), size(width, height), active(true) {
+    if (width <= 0.0f || height <= 0.0f) {
+        throw std::invalid_argument("Largura e altura da entidade devem ser maiores que zero.");
+    }
+}
+
+char Entity::getSymbol() const {
+    return ' ';
 }
 
 Rect Entity::getBounds() const {

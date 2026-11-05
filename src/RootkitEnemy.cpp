@@ -38,7 +38,10 @@ char RootkitEnemy::getSymbol() const {
 }
 
 void RootkitEnemy::takeDamage(float amount) {
-    if (amount <= 0.0f) {
+    if (amount < 0.0f) {
+        throw std::invalid_argument("Enemy damage amount cannot be negative");
+    }
+    if (amount == 0.0f) {
         return;
     }
 

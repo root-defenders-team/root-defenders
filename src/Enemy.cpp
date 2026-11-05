@@ -1,12 +1,15 @@
 ﻿#include "Enemy.hpp"
 
+#include <stdexcept>
+
 Enemy::Enemy(float startX, float startY, float width, float height, float hp, float speed, int goldReward)
     : Entity(startX, startY, width, height),
       _hp(hp),
       _maxHp(hp),
       _speed(speed),
       _goldReward(goldReward),
-      _waypointIndex(0) {}
+      _waypointIndex(0),
+      _distanceTravelled(0.0f) {}
 
 void Enemy::update(float /*deltaTime*/) {
     // Comportamento genérico de atualização por frame.
@@ -19,6 +22,7 @@ void Enemy::moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime
     }
 
     float remainingDistance = _speed * deltaTime;
+    float startRemaining = remainingDistance;
 
     while (remainingDistance > 0.0f && !hasReachedEnd(waypoints)) {
         Vector2 target = waypoints[_waypointIndex];
@@ -35,14 +39,17 @@ void Enemy::moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime
             remainingDistance = 0.0f;
         }
     }
+
+    _distanceTravelled += (startRemaining - remainingDistance);
 }
 
 void Enemy::takeDamage(float amount) {
-    if (amount > 0.0f) {
-        _hp -= amount;
-        if (_hp < 0.0f) {
-            _hp = 0.0f;
-        }
+    if (amount < 0.0f) {
+        throw std::invalid_argument("Enemy damage amount cannot be negative");
+    }
+    _hp -= amount;
+    if (_hp < 0.0f) {
+        _hp = 0.0f;
     }
 }
 
@@ -68,6 +75,10 @@ float Enemy::getSpeed() const {
 
 std::size_t Enemy::getWaypointIndex() const {
     return _waypointIndex;
+}
+
+float Enemy::getDistanceTravelled() const {
+    return _distanceTravelled;
 }
 
 bool Enemy::hasReachedEnd(const std::vector<Vector2>& waypoints) const {

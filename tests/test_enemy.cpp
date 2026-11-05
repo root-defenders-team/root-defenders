@@ -1,7 +1,9 @@
 ﻿#include <doctest/doctest.h>
+#include <stdexcept>
+#include <vector>
+
 #include "Enemy.hpp"
 #include "Vector2.hpp"
-#include <vector>
 
 class InimigoTeste : public Enemy {
 public:
@@ -19,18 +21,19 @@ TEST_CASE("inicializacao e getters basicos") {
     CHECK(enemy.getSpeed() == 10.0f);
     CHECK(enemy.getGoldReward() == 50);
     CHECK(enemy.getWaypointIndex() == 0);
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
     CHECK_FALSE(enemy.isDead());
 }
 
-TEST_CASE("mecanica de dano e morte") {
+TEST_CASE("mecanica de dano, morte e excecoes") {
     InimigoTeste enemy(0.0f, 0.0f, 32.0f, 32.0f, 100.0f, 10.0f, 50);
 
     enemy.takeDamage(30.0f);
     CHECK(enemy.getHp() == 70.0f);
     CHECK_FALSE(enemy.isDead());
 
-    // Dano negativo deve ser ignorado
-    enemy.takeDamage(-10.0f);
+    // Dano negativo lanca invalid_argument (checkpoint de excecoes)
+    CHECK_THROWS_AS(enemy.takeDamage(-10.0f), std::invalid_argument);
     CHECK(enemy.getHp() == 70.0f);
 
     // Dano letal
@@ -39,7 +42,7 @@ TEST_CASE("mecanica de dano e morte") {
     CHECK(enemy.isDead());
 }
 
-TEST_CASE("movimentacao ao longo dos waypoints") {
+TEST_CASE("movimentacao ao longo dos waypoints e distanceTravelled") {
     InimigoTeste enemy(0.0f, 0.0f, 32.0f, 32.0f, 100.0f, 10.0f, 50);
     std::vector<Vector2> waypoints = {
         Vector2(10.0f, 0.0f),
@@ -48,18 +51,21 @@ TEST_CASE("movimentacao ao longo dos waypoints") {
 
     CHECK_FALSE(enemy.hasReachedEnd(waypoints));
     CHECK(enemy.getWaypointIndex() == 0);
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
 
     // Move 0.5s com velocidade 10 -> anda 5 unidades em direcao a (10, 0)
     enemy.moveAlongPath(waypoints, 0.5f);
     CHECK(enemy.getPosition().x == doctest::Approx(5.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(0.0f));
     CHECK(enemy.getWaypointIndex() == 0);
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(5.0f));
 
     // Move mais 0.5s -> chega exatamente em (10, 0) e avanca para o proximo waypoint
     enemy.moveAlongPath(waypoints, 0.5f);
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(0.0f));
     CHECK(enemy.getWaypointIndex() == 1);
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(10.0f));
     CHECK_FALSE(enemy.hasReachedEnd(waypoints));
 
     // Move 1.0s -> anda 10 unidades em direcao a (10, 20) -> chega em (10, 10)
@@ -67,18 +73,21 @@ TEST_CASE("movimentacao ao longo dos waypoints") {
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(10.0f));
     CHECK(enemy.getWaypointIndex() == 1);
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(20.0f));
 
     // Move 1.0s -> chega ao fim da rota (10, 20)
     enemy.moveAlongPath(waypoints, 1.0f);
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(20.0f));
     CHECK(enemy.getWaypointIndex() == 2);
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(30.0f));
     CHECK(enemy.hasReachedEnd(waypoints));
 
     // Movimentar apos alcancar o fim nao deve alterar nada
     enemy.moveAlongPath(waypoints, 1.0f);
     CHECK(enemy.getPosition().x == doctest::Approx(10.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(20.0f));
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(30.0f));
 }
 
 TEST_CASE("movimentacao com tempo zero ou negativo nao altera posicao") {
@@ -87,9 +96,11 @@ TEST_CASE("movimentacao com tempo zero ou negativo nao altera posicao") {
 
     enemy.moveAlongPath(waypoints, 0.0f);
     CHECK(enemy.getPosition().x == doctest::Approx(5.0f));
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
 
     enemy.moveAlongPath(waypoints, -1.0f);
     CHECK(enemy.getPosition().x == doctest::Approx(5.0f));
+    CHECK(enemy.getDistanceTravelled() == doctest::Approx(0.0f));
 }
 
 } // TEST_SUITE("Enemy")

@@ -19,6 +19,7 @@ protected:
     float _speed;               ///< Velocidade de deslocamento no mapa (unidades por segundo).
     int _goldReward;            ///< Recompensa em ouro concedida ao ser derrotado.
     std::size_t _waypointIndex; ///< Índice atual do waypoint que o inimigo está perseguindo.
+    float _distanceTravelled;   ///< Distância total percorrida pelo inimigo no caminho.
 
 public:
     /**
@@ -89,6 +90,11 @@ public:
      * @brief Obtém o índice do waypoint atual que o inimigo está perseguindo.
      */
     std::size_t getWaypointIndex() const;
+
+    /**
+     * @brief Obtém a distância total percorrida pelo inimigo.
+     */
+    float getDistanceTravelled() const;
 
     /**
      * @brief Verifica se o inimigo chegou ao final da rota de waypoints.

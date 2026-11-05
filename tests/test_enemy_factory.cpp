@@ -38,7 +38,8 @@ TEST_CASE("creates each supported enemy type") {
 }
 
 TEST_CASE("rejects unknown enum values and empty paths") {
-    const std::vector<Vector2> path{Vector2{0.0f, 0.0f}};
+    const std::vector<Vector2> path{
+        Vector2{0.0f, 0.0f}, Vector2{1.0f, 0.0f}};
     const std::vector<Vector2> emptyPath;
 
     CHECK_THROWS_AS(

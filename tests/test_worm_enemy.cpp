@@ -16,8 +16,8 @@ TEST_CASE("exposes worm symbol and balance attributes") {
     CHECK(enemy.getHp() == doctest::Approx(15.0f));
     CHECK(enemy.getMaxHp() == doctest::Approx(15.0f));
     CHECK(enemy.getSpeed() == doctest::Approx(2.0f));
-    CHECK(enemy.getGoldReward() == 5);
-    CHECK(enemy.getDamageToRoot() == 8);
+    CHECK(enemy.getReward() == 8);
+    CHECK(enemy.getDamageToRoot() == 5);
     CHECK(enemy.getPosition().x == doctest::Approx(1.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(2.0f));
 }
@@ -33,9 +33,11 @@ TEST_CASE("moves along its path using its configured speed") {
 }
 
 TEST_CASE("requires a non-empty path") {
-    const std::vector<Vector2> path;
+    const std::vector<Vector2> emptyPath;
+    const std::vector<Vector2> shortPath{Vector2{0.0f, 0.0f}};
 
-    CHECK_THROWS_AS(WormEnemy{path}, std::invalid_argument);
+    CHECK_THROWS_AS(WormEnemy{emptyPath}, std::invalid_argument);
+    CHECK_THROWS_AS(WormEnemy{shortPath}, std::invalid_argument);
 }
 
 } // TEST_SUITE("WormEnemy")

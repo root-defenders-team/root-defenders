@@ -16,8 +16,8 @@ TEST_CASE("exposes rootkit symbol and balance attributes") {
     CHECK(enemy.getHp() == doctest::Approx(120.0f));
     CHECK(enemy.getMaxHp() == doctest::Approx(120.0f));
     CHECK(enemy.getSpeed() == doctest::Approx(0.6f));
-    CHECK(enemy.getGoldReward() == 25);
-    CHECK(enemy.getDamageToRoot() == 30);
+    CHECK(enemy.getReward() == 30);
+    CHECK(enemy.getDamageToRoot() == 25);
     CHECK(enemy.getPosition().x == doctest::Approx(1.0f));
     CHECK(enemy.getPosition().y == doctest::Approx(2.0f));
 }
@@ -33,7 +33,8 @@ TEST_CASE("moves along its path using its configured speed") {
 }
 
 TEST_CASE("armor reduces damage by three with a minimum of one") {
-    const std::vector<Vector2> path{Vector2{0.0f, 0.0f}};
+    const std::vector<Vector2> path{
+        Vector2{0.0f, 0.0f}, Vector2{5.0f, 0.0f}};
     RootkitEnemy enemy(path);
 
     enemy.takeDamage(10.0f);
@@ -50,9 +51,11 @@ TEST_CASE("armor reduces damage by three with a minimum of one") {
 }
 
 TEST_CASE("requires a non-empty path") {
-    const std::vector<Vector2> path;
+    const std::vector<Vector2> emptyPath;
+    const std::vector<Vector2> shortPath{Vector2{0.0f, 0.0f}};
 
-    CHECK_THROWS_AS(RootkitEnemy{path}, std::invalid_argument);
+    CHECK_THROWS_AS(RootkitEnemy{emptyPath}, std::invalid_argument);
+    CHECK_THROWS_AS(RootkitEnemy{shortPath}, std::invalid_argument);
 }
 
 } // TEST_SUITE("RootkitEnemy")

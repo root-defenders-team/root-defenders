@@ -13,7 +13,7 @@ BIN_DIR := $(BUILD_DIR)/bin
 TARGET := $(BIN_DIR)/root_defense
 TEST_TARGET := $(BIN_DIR)/tests
 
-# Esperando CommandParser, TerminalRenderer, TowerFactory e ScoreBoard
+# Esperando TerminalRenderer e TowerFactory
 EXCLUDED_SOURCES := $(SRC_DIR)/Shell.cpp
 EXCLUDED_TESTS := $(TEST_DIR)/test_shell.cpp
 

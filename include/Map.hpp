@@ -118,12 +118,12 @@ public:
     bool hasPath() const;
 
 private:
-    std::size_t width_;
-    std::size_t height_;
-    std::vector<std::vector<CellType> > cells_;
-    std::vector<std::vector<bool> > occupiedCells_;
-    std::vector<Cell> waypoints_;
-    std::vector<Vector2> path_;
+    std::size_t width;
+    std::size_t height;
+    std::vector<std::vector<CellType> > cells;
+    std::vector<std::vector<bool> > occupiedCells;
+    std::vector<Cell> waypoints;
+    std::vector<Vector2> path;
 };
 
 #endif // MAP_HPP

@@ -1,0 +1,10 @@
+// onda tipo quantidade intervalo(s)
+1 virus 3 0.8
+2 virus 4 0.7
+2 worm 2 0.6
+3 worm 4 0.5
+3 rootkit 1 0
+4 virus 10 0.7
+4 rootkit 1 0
+5 worm 12 0.4
+5 rootkit 2 2.0

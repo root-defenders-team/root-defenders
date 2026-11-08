@@ -1,4 +1,4 @@
-﻿#include "Enemy.hpp"
+#include "Enemy.hpp"
 
 #include <cmath>
 #include <stdexcept>
@@ -24,19 +24,19 @@ Enemy::Enemy(const std::vector<Vector2>& path, float maxHp, float speed,
       waypointIndex(path.size() > 1 ? 1 : 0),
       distanceTravelled(0.0f) {
     if (path.size() < 2) {
-        throw std::invalid_argument("Enemy path must contain at least 2 waypoints");
+        throw std::invalid_argument("O caminho do inimigo precisa ter pelo menos 2 pontos.");
     }
     if (maxHp <= 0.0f) {
-        throw std::invalid_argument("Enemy maxHp must be positive");
+        throw std::invalid_argument("A vida máxima do inimigo deve ser positiva.");
     }
     if (speed <= 0.0f) {
-        throw std::invalid_argument("Enemy speed must be positive");
+        throw std::invalid_argument("A velocidade do inimigo deve ser positiva.");
     }
     if (reward < 0) {
-        throw std::invalid_argument("Enemy reward cannot be negative");
+        throw std::invalid_argument("A recompensa do inimigo não pode ser negativa.");
     }
     if (damageToRoot <= 0) {
-        throw std::invalid_argument("Enemy damageToRoot must be positive");
+        throw std::invalid_argument("O dano do inimigo ao /root deve ser positivo.");
     }
 }
 
@@ -110,7 +110,7 @@ void Enemy::moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime
 
 void Enemy::takeDamage(float amount) {
     if (amount < 0.0f) {
-        throw std::invalid_argument("Enemy damage amount cannot be negative");
+        throw std::invalid_argument("O dano recebido pelo inimigo não pode ser negativo.");
     }
     hp -= amount;
     if (hp <= 0.0f) {

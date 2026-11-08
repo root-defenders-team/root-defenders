@@ -6,9 +6,9 @@
 
 /**
  * @brief Classe abstrata base para todas as entidades do jogo.
- * 
- * A classe Entity centraliza as propriedades físicas e lógicas comuns a todos os 
- * objetos em jogo (Torres, Inimigos e Projéteis). 
+ *
+ * A classe Entity centraliza as propriedades físicas e lógicas comuns a todos os
+ * objetos em jogo (Torres, Inimigos e Projéteis).
  */
 class Entity {
 protected:
@@ -34,10 +34,10 @@ public:
 
     /**
      * @brief Define a interface de atualização de estado.
-     * 
-     * Método virtual puro que obriga as subclasses a implementarem suas lógicas 
+     *
+     * Método virtual puro que obriga as subclasses a implementarem suas lógicas
      * a cada ciclo do loop principal.
-     * 
+     *
      * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
      */
     virtual void update(float deltaTime) = 0;
@@ -50,7 +50,7 @@ public:
 
     /**
      * @brief Permite verificações básicas de colisão entre entidades.
-     * 
+     *
      * @param other Referência constante para a entidade alvo da verificação.
      * @return true se as bounding boxes das entidades estiverem sobrepostas, false caso contrário.
      */
@@ -58,9 +58,9 @@ public:
 
     /**
      * @brief Representa a área ocupada pela entidade.
-     * 
+     *
      * Essencial para a lógica de colisão e para os limites físicos no mapa.
-     * 
+     *
      * @return Rect contendo o retângulo delimitador (Bounding Box) da entidade.
      */
     Rect getBounds() const;

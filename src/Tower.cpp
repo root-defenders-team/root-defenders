@@ -1,4 +1,4 @@
-﻿#include "Tower.hpp"
+#include "Tower.hpp"
 
 #include <cmath>
 #include <stdexcept>
@@ -19,16 +19,16 @@ Tower::Tower(const Cell& cell, float range, float damage, float fireInterval, in
       investedGold(cost),
       targetPriority(TargetPriority::First) {
     if (range <= 0.0f) {
-        throw std::invalid_argument("Tower range must be positive");
+        throw std::invalid_argument("O alcance da defesa deve ser positivo.");
     }
     if (damage <= 0.0f) {
-        throw std::invalid_argument("Tower damage must be positive");
+        throw std::invalid_argument("O dano da defesa deve ser positivo.");
     }
     if (fireInterval <= 0.0f) {
-        throw std::invalid_argument("Tower fire interval must be positive");
+        throw std::invalid_argument("O intervalo entre disparos da defesa deve ser positivo.");
     }
     if (cost <= 0) {
-        throw std::invalid_argument("Tower cost must be positive");
+        throw std::invalid_argument("O custo da defesa deve ser positivo.");
     }
 }
 
@@ -66,7 +66,7 @@ bool Tower::canUpgrade() const {
 
 void Tower::upgrade() {
     if (!canUpgrade()) {
-        throw std::logic_error("Tower already at maximum level");
+        throw std::logic_error("A defesa já está no nível máximo.");
     }
     investedGold += getUpgradeCost();
     level++;
@@ -119,21 +119,21 @@ void Tower::setTargetPriority(TargetPriority newPriority) {
 
 void Tower::setRange(float newRange) {
     if (newRange <= 0.0f) {
-        throw std::invalid_argument("Tower range must be positive");
+        throw std::invalid_argument("O alcance da defesa deve ser positivo.");
     }
     range = newRange;
 }
 
 void Tower::setDamage(float newDamage) {
     if (newDamage <= 0.0f) {
-        throw std::invalid_argument("Tower damage must be positive");
+        throw std::invalid_argument("O dano da defesa deve ser positivo.");
     }
     damage = newDamage;
 }
 
 void Tower::setFireInterval(float newFireInterval) {
     if (newFireInterval <= 0.0f) {
-        throw std::invalid_argument("Tower fire interval must be positive");
+        throw std::invalid_argument("O intervalo entre disparos da defesa deve ser positivo.");
     }
     fireInterval = newFireInterval;
 }

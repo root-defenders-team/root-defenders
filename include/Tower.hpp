@@ -1,4 +1,4 @@
-﻿#ifndef TOWER_HPP
+#ifndef TOWER_HPP
 #define TOWER_HPP
 
 #include <memory>

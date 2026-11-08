@@ -25,10 +25,16 @@ public:
      */
     Map(std::size_t width, std::size_t height);
 
-    /** @brief Retorna a quantidade de colunas do mapa. */
+    /**
+     * @brief Retorna a quantidade de colunas do mapa.
+     * @return A quantidade de colunas do mapa.
+     */
     std::size_t getWidth() const;
 
-    /** @brief Retorna a quantidade de linhas do mapa. */
+    /**
+     * @brief Retorna a quantidade de linhas do mapa.
+     * @return A quantidade de linhas do mapa.
+     */
     std::size_t getHeight() const;
 
     /**
@@ -118,12 +124,12 @@ public:
     bool hasPath() const;
 
 private:
-    std::size_t width;
-    std::size_t height;
-    std::vector<std::vector<CellType> > cells;
-    std::vector<std::vector<bool> > occupiedCells;
-    std::vector<Cell> waypoints;
-    std::vector<Vector2> path;
+    std::size_t width;                             ///< Quantidade de colunas.
+    std::size_t height;                            ///< Quantidade de linhas.
+    std::vector<std::vector<CellType> > cells;     ///< Tipo de cada célula, por linha.
+    std::vector<std::vector<bool> > occupiedCells; ///< Células ocupadas por defesas.
+    std::vector<Cell> waypoints;                   ///< Células do caminho, em ordem.
+    std::vector<Vector2> path;                     ///< Os mesmos pontos, em Vector2.
 };
 
 #endif // MAP_HPP

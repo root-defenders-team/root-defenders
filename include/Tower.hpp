@@ -1,4 +1,4 @@
-﻿#ifndef TOWER_HPP
+#ifndef TOWER_HPP
 #define TOWER_HPP
 
 #include <memory>
@@ -86,14 +86,58 @@ public:
      */
     int getSellValue() const;
 
+    /**
+     * @brief Retorna a célula onde a defesa está instalada.
+     * @return A célula da defesa.
+     */
     Cell getCell() const;
+
+    /**
+     * @brief Retorna o alcance da defesa.
+     * @return O alcance, em células.
+     */
     float getRange() const;
+
+    /**
+     * @brief Retorna o dano de cada ataque.
+     * @return O dano de cada ataque.
+     */
     float getDamage() const;
+
+    /**
+     * @brief Retorna o intervalo entre dois ataques.
+     * @return O intervalo, em segundos.
+     */
     float getFireInterval() const;
+
+    /**
+     * @brief Retorna o tempo que falta para o próximo ataque.
+     * @return O cooldown restante, em segundos.
+     */
     float getCooldown() const;
+
+    /**
+     * @brief Retorna o custo de instalação da defesa.
+     * @return O custo, em CPU.
+     */
     int getCost() const;
+
+    /**
+     * @brief Retorna o nível atual da defesa.
+     * @return O nível, de 1 a MAX_LEVEL.
+     */
     int getLevel() const;
+
+    /**
+     * @brief Retorna o critério usado para escolher o alvo.
+     * @return A prioridade de alvo atual.
+     */
     TargetPriority getTargetPriority() const;
+
+    /**
+     * @brief Muda o critério usado para escolher o alvo.
+     * @param newPriority Nova prioridade de alvo.
+     */
     void setTargetPriority(TargetPriority newPriority);
 
 protected:
@@ -111,22 +155,44 @@ protected:
      */
     virtual void applyUpgrade() = 0;
 
+    /**
+     * @brief Define o alcance; usado pelas subclasses no upgrade.
+     * @param newRange Novo alcance, em células.
+     * @throws std::invalid_argument se newRange não for positivo.
+     */
     void setRange(float newRange);
+
+    /**
+     * @brief Define o dano; usado pelas subclasses no upgrade.
+     * @param newDamage Novo dano de cada ataque.
+     * @throws std::invalid_argument se newDamage não for positivo.
+     */
     void setDamage(float newDamage);
+
+    /**
+     * @brief Define o intervalo entre ataques; usado pelas subclasses no upgrade.
+     * @param newFireInterval Novo intervalo, em segundos.
+     * @throws std::invalid_argument se newFireInterval não for positivo.
+     */
     void setFireInterval(float newFireInterval);
 
 private:
+    /**
+     * @brief Escolhe, entre os inimigos ativos no alcance, o alvo pela prioridade.
+     * @param enemies Inimigos ativos no mapa.
+     * @return O alvo escolhido, ou nullptr se nenhum estiver no alcance.
+     */
     Enemy* selectTarget(const std::vector<Enemy*>& enemies) const;
 
-    Cell cell;
-    float range;
-    float damage;
-    float fireInterval;
-    float cooldown;
-    int cost;
-    int level;
-    int investedGold;
-    TargetPriority targetPriority;
+    Cell cell;                     ///< Célula onde a defesa está instalada.
+    float range;                   ///< Alcance, em células.
+    float damage;                  ///< Dano de cada ataque.
+    float fireInterval;            ///< Intervalo entre ataques, em segundos.
+    float cooldown;                ///< Tempo até o próximo ataque, em segundos.
+    int cost;                      ///< Custo de instalação, em CPU.
+    int level;                     ///< Nível atual, de 1 a MAX_LEVEL.
+    int investedGold;              ///< Total de CPU investido (instalação e upgrades).
+    TargetPriority targetPriority; ///< Critério de escolha do alvo.
 };
 
 #endif // TOWER_HPP

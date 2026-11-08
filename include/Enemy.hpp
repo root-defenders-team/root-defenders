@@ -1,4 +1,4 @@
-﻿#ifndef ENEMY_HPP
+#ifndef ENEMY_HPP
 #define ENEMY_HPP
 
 #include "Entity.hpp"
@@ -30,6 +30,13 @@ public:
 
     /**
      * @brief Construtor legado mantido para compatibilidade transitória com testes de torres.
+     * @param startX Posição horizontal inicial.
+     * @param startY Posição vertical inicial.
+     * @param width Largura do inimigo.
+     * @param height Altura do inimigo.
+     * @param hp Pontos de vida iniciais.
+     * @param speed Velocidade de deslocamento (unidades por segundo).
+     * @param goldReward Recompensa em CPU concedida ao ser destruído.
      */
     Enemy(float startX, float startY, float width, float height,
           float hp, float speed, int goldReward);
@@ -53,6 +60,7 @@ public:
 
     /**
      * @brief Verifica se o inimigo foi derrotado (HP <= 0).
+     * @return true se a vida chegou a 0.
      */
     bool isDead() const;
 
@@ -64,23 +72,64 @@ public:
 
     /**
      * @brief Sobrecarga legada com parâmetro para compatibilidade transitória.
+     * @param waypoints Rota a conferir.
+     * @return true se atingiu o último ponto da rota informada.
      */
     bool hasReachedEnd(const std::vector<Vector2>& waypoints) const;
 
     /**
      * @brief Método legado de compatibilidade transitória.
+     * @param waypoints Rota a percorrer.
+     * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
      */
     void moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime);
 
+    /**
+     * @brief Retorna os pontos de vida atuais.
+     * @return Os pontos de vida atuais.
+     */
     float getHp() const;
+
+    /**
+     * @brief Retorna os pontos de vida máximos.
+     * @return Os pontos de vida máximos.
+     */
     float getMaxHp() const;
+
+    /**
+     * @brief Retorna a velocidade, em células por segundo.
+     * @return A velocidade, em células por segundo.
+     */
     float getSpeed() const;
+
+    /**
+     * @brief Retorna a recompensa em CPU dada ao ser destruído.
+     * @return A recompensa em CPU dada ao ser destruído.
+     */
     int getReward() const;
+
+    /**
+     * @brief Retorna o dano causado ao /root ao chegar ao fim do caminho.
+     * @return O dano causado ao /root ao chegar ao fim do caminho.
+     */
     int getDamageToRoot() const;
+
+    /**
+     * @brief Retorna a distância já percorrida no caminho.
+     * @return A distância já percorrida no caminho.
+     */
     float getDistanceTravelled() const;
+
+    /**
+     * @brief Retorna o índice do último ponto do caminho já alcançado.
+     * @return O índice do último ponto do caminho já alcançado.
+     */
     std::size_t getWaypointIndex() const;
 
-    // Alias legado de compatibilidade
+    /**
+     * @brief Nome legado de getReward(), mantido por compatibilidade.
+     * @return A recompensa em CPU dada ao ser destruído.
+     */
     int getGoldReward() const;
 
 protected:

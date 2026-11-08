@@ -20,9 +20,9 @@ TEST_CASE("initializes with correct position, size, and active state") {
 
     CHECK(entity.getPosition().x == 10.5f);
     CHECK(entity.getPosition().y == 20.0f);
-    
+
     // Assumindo que a entidade inicie ativa por padrão no construtor
-    CHECK(entity.isActive() == true); 
+    CHECK(entity.isActive() == true);
 
     Rect bounds = entity.getBounds();
     CHECK(bounds.left == 10.5f);

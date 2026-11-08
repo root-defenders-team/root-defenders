@@ -18,10 +18,17 @@ public:
      */
     explicit RootkitEnemy(const std::vector<Vector2>& path);
 
-    /** @brief Retorna o símbolo 'r'. */
+    /**
+     * @brief Retorna o símbolo 'r'.
+     * @return O símbolo 'r'.
+     */
     char getSymbol() const;
 
-    /** @brief Aplica a blindagem, reduzindo o dano recebido em 3, mínimo 1. */
+    /**
+     * @brief Aplica a blindagem, reduzindo o dano recebido em 3, mínimo 1.
+     * @param amount Dano antes da blindagem.
+     * @throws std::invalid_argument se amount for negativo.
+     */
     void takeDamage(float amount) override;
 };
 

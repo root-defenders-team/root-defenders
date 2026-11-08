@@ -141,7 +141,10 @@ public:
      */
     const Tower* getTowerAt(const Cell& cell) const;
 
-    /** @brief Retorna a CPU disponível. */
+    /**
+     * @brief Retorna a CPU disponível.
+     * @return A CPU disponível.
+     */
     int getGold() const;
 
     /**
@@ -164,16 +167,28 @@ public:
      */
     void damageRoot(int amount);
 
-    /** @brief Retorna a integridade atual do /root. */
+    /**
+     * @brief Retorna a integridade atual do /root.
+     * @return A integridade atual do /root.
+     */
     int getRootIntegrity() const;
 
-    /** @brief Retorna a pontuação da partida. */
+    /**
+     * @brief Retorna a pontuação da partida.
+     * @return A pontuação da partida.
+     */
     int getScore() const;
 
-    /** @brief Retorna o número da onda atual (0 antes da primeira). */
+    /**
+     * @brief Retorna o número da onda atual (0 antes da primeira).
+     * @return O número da onda atual (0 antes da primeira).
+     */
     std::size_t getCurrentWave() const;
 
-    /** @brief Retorna quantas ondas a partida tem. */
+    /**
+     * @brief Retorna quantas ondas a partida tem.
+     * @return Quantas ondas a partida tem.
+     */
     std::size_t getTotalWaves() const;
 
     /**
@@ -183,19 +198,34 @@ public:
      */
     bool isWaveFinished() const;
 
-    /** @brief Retorna o estado atual da partida. */
+    /**
+     * @brief Retorna o estado atual da partida.
+     * @return O estado atual da partida.
+     */
     GameState getState() const;
 
-    /** @brief Retorna o mapa da partida. */
+    /**
+     * @brief Retorna o mapa da partida.
+     * @return O mapa da partida.
+     */
     const Map& getMap() const;
 
-    /** @brief Retorna as defesas instaladas. */
+    /**
+     * @brief Retorna as defesas instaladas.
+     * @return As defesas instaladas.
+     */
     const std::vector<std::unique_ptr<Tower> >& getTowers() const;
 
-    /** @brief Retorna os malwares em jogo. */
+    /**
+     * @brief Retorna os malwares em jogo.
+     * @return Os malwares em jogo.
+     */
     const std::vector<std::unique_ptr<Enemy> >& getEnemies() const;
 
-    /** @brief Retorna os projéteis em voo. */
+    /**
+     * @brief Retorna os projéteis em voo.
+     * @return Os projéteis em voo.
+     */
     const std::vector<std::unique_ptr<Projectile> >& getProjectiles() const;
 
 private:

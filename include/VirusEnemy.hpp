@@ -18,7 +18,10 @@ public:
      */
     explicit VirusEnemy(const std::vector<Vector2>& path);
 
-    /** @brief Retorna o símbolo 'v'. */
+    /**
+     * @brief Retorna o símbolo 'v'.
+     * @return O símbolo 'v'.
+     */
     char getSymbol() const;
 };
 

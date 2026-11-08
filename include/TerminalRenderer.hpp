@@ -56,7 +56,7 @@ public:
     void drawRanking(const ScoreBoard& board, std::ostream& out) const;
 
 private:
-    bool useColors;
+    bool useColors; ///< Se true, desenha com cores ANSI.
 };
 
 #endif // TERMINAL_RENDERER_HPP

@@ -7,9 +7,9 @@
  * @brief Configuração de um grupo de inimigos de uma onda.
  */
 struct SpawnGroup {
-    EnemyType type;
-    int count;
-    float interval;
+    EnemyType type; ///< Tipo dos inimigos do grupo.
+    int count;      ///< Quantos inimigos o grupo tem.
+    float interval; ///< Segundos entre um nascimento e o próximo.
 };
 
 #endif // SPAWN_GROUP_HPP

@@ -18,7 +18,10 @@ public:
      */
     explicit WormEnemy(const std::vector<Vector2>& path);
 
-    /** @brief Retorna o símbolo 'w'. */
+    /**
+     * @brief Retorna o símbolo 'w'.
+     * @return O símbolo 'w'.
+     */
     char getSymbol() const;
 };
 

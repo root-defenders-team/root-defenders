@@ -10,7 +10,7 @@
 /**
  * @brief Ranking das 5 melhores partidas, guardado num arquivo de texto.
  *
- * Cada linha do arquivo tem o formato <pontos>;<onda alcançada>;<nome>, da maior
+ * Cada linha do arquivo tem o formato pontos;onda alcançada;nome, da maior
  * para a menor pontuação. Arquivo ausente vira ranking vazio, e linha corrompida
  * é pulada e contada, para o Shell avisar o jogador sem interromper o jogo.
  */
@@ -59,13 +59,22 @@ public:
      */
     void addEntry(const ScoreEntry& entry);
 
-    /** @brief Retorna as entradas, da maior para a menor pontuação. */
+    /**
+     * @brief Retorna as entradas, da maior para a menor pontuação.
+     * @return As entradas, da maior para a menor pontuação.
+     */
     const std::vector<ScoreEntry>& getEntries() const;
 
-    /** @brief Retorna a maior pontuação do ranking, ou 0 se ele estiver vazio. */
+    /**
+     * @brief Retorna a maior pontuação do ranking, ou 0 se ele estiver vazio.
+     * @return A maior pontuação do ranking, ou 0 se ele estiver vazio.
+     */
     int getHighScore() const;
 
-    /** @brief Retorna quantas linhas corrompidas o último load() pulou. */
+    /**
+     * @brief Retorna quantas linhas corrompidas o último load() pulou.
+     * @return Quantas linhas corrompidas o último load() pulou.
+     */
     int getIgnoredLines() const;
 
 private:

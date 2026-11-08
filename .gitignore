@@ -439,3 +439,5 @@ build/*
 *.d
 *.gcda
 *.gcno
+# Ranking gravado pelo jogo a cada partida
+assets/ranking.txt

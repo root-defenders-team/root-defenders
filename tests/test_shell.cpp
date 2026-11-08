@@ -232,6 +232,17 @@ TEST_CASE_FIXTURE(ShellTest, "run plays the whole wave") {
     CHECK(game.getState() == GameManager::GameState::Victory);
 }
 
+TEST_CASE_FIXTURE(ShellTest, "the screen explains how to play and what happens in a wave") {
+    input.str("run\n\n");
+
+    shell.run();
+
+    CHECK(contains(output, "Como jogar"));
+    CHECK(contains(output, "Onda 1 de 1 em andamento"));
+    CHECK(contains(output, "Aguarde o fim da onda"));
+    CHECK(contains(output, "Legenda:"));
+}
+
 TEST_CASE_FIXTURE(ShellTest, "run without a wave left shows an error") {
     REQUIRE(shell.execute("run"));
     output.str("");

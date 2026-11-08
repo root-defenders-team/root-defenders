@@ -178,7 +178,10 @@ void Shell::run() {
                << " linha(s) corrompida(s) do ranking foram ignoradas\n";
     }
     renderer.drawFrame(game, output);
-    output << "Digite help para ver os comandos.\n";
+    output << "Como jogar: instale defesas nas células '.' com install <tipo> <x> <y>\n"
+           << "(x é a coluna, numerada em cima; y é a linha, numerada à esquerda).\n"
+           << "Exemplo: install firewall 4 5. Depois digite run para soltar a onda.\n"
+           << "Digite help para ver todos os comandos.\n";
 
     std::string line;
     while (!isGameOver(game)) {
@@ -368,6 +371,9 @@ void Shell::runWave() {
     while (game.getState() == GameManager::GameState::WaveRunning) {
         game.update(TICK_SECONDS);
         renderer.drawFrame(game, output);
+        output << "Onda " << game.getCurrentWave() << " de " << game.getTotalWaves()
+               << " em andamento | malwares no mapa: " << game.getEnemies().size() << '\n'
+               << "Aguarde o fim da onda: os comandos só valem depois dela.\n";
         if (frameDelay > 0) {
             std::this_thread::sleep_for(std::chrono::milliseconds(frameDelay));
         }
@@ -375,7 +381,8 @@ void Shell::runWave() {
     if (game.getState() == GameManager::GameState::Preparing) {
         output << "Onda " << game.getCurrentWave() << " concluída. CPU: " << game.getGold()
                << " | Pontos: " << game.getScore() << " | Integridade do /root: "
-               << game.getRootIntegrity() << '\n';
+               << game.getRootIntegrity() << '\n'
+               << "Reforce as defesas e digite run para a próxima onda.\n";
     }
 }
 

@@ -21,7 +21,7 @@ public:
     explicit TerminalRenderer(bool useColors = false);
 
     /**
-     * @brief Limpa a tela e desenha o cabeçalho seguido do mapa.
+     * @brief Limpa a tela e desenha o cabeçalho, o mapa e a legenda dos símbolos.
      * @param game Partida cujos dados serão desenhados.
      * @param out Fluxo de saída onde o quadro será escrito.
      */
@@ -36,6 +36,11 @@ public:
 
     /**
      * @brief Desenha a grade ASCII do mapa com terreno e entidades ativas.
+     *
+     * As colunas (x) aparecem numeradas em cima e as linhas (y) à esquerda, para o
+     * jogador saber as coordenadas dos comandos. Com cores ligadas, cada símbolo
+     * ganha uma cor ANSI.
+     *
      * @param game Partida cujos dados serão desenhados.
      * @param out Fluxo de saída onde o mapa será escrito.
      */

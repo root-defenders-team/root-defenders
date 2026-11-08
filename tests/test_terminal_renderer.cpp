@@ -70,10 +70,43 @@ TEST_CASE("drawMap desenha terreno, entrada, root, defesas e malwares nas posico
     renderer.drawMap(game, out);
 
     std::string expected =
-        ".FX.\n"
-        "v##@\n"
-        "....\n";
+        "   0123\n"
+        " 0 .FX.\n"
+        " 1 v##@\n"
+        " 2 ....\n";
     CHECK(out.str() == expected);
+}
+
+TEST_CASE("drawMap numera as dezenas das colunas em mapas largos") {
+    Map map(12, 2);
+    for (int x = 0; x < 12; ++x) {
+        Cell cell = {x, 0};
+        map.setCellType(cell, CellType::Path);
+        map.addWaypoint(cell);
+    }
+    GameManager game(map, makeRendererTestWaves());
+
+    TerminalRenderer renderer(false);
+    std::ostringstream out;
+    renderer.drawMap(game, out);
+
+    CHECK(out.str().find("             11\n") == 0);
+    CHECK(out.str().find("   012345678901\n") != std::string::npos);
+}
+
+TEST_CASE("drawMap pinta os simbolos quando as cores estao ligadas") {
+    GameManager game(makeRendererTestMap(), makeRendererTestWaves());
+    Cell towerCell = {1, 0};
+    REQUIRE(game.buildTower(util::makeUnique<FirewallTower>(towerCell)));
+    game.spawnEnemy(util::makeUnique<VirusEnemy>(game.getMap().getPath()));
+
+    TerminalRenderer renderer(true);
+    std::ostringstream out;
+    renderer.drawMap(game, out);
+
+    CHECK(out.str().find("\033[1;32mF\033[0m") != std::string::npos);
+    CHECK(out.str().find("\033[1;31mv\033[0m") != std::string::npos);
+    CHECK(out.str().find("\033[1;35m@\033[0m") != std::string::npos);
 }
 
 TEST_CASE("drawFrame limpa a tela e desenha cabecalho e mapa") {
@@ -87,6 +120,7 @@ TEST_CASE("drawFrame limpa a tela e desenha cabecalho e mapa") {
     CHECK(frame.find("\033[2J\033[H") == 0);
     CHECK(frame.find("CPU: 200") != std::string::npos);
     CHECK(frame.find("E##@") != std::string::npos);
+    CHECK(frame.find("Legenda:") != std::string::npos);
 }
 
 TEST_CASE("drawTowerList e drawRanking exibem informacoes formatadas") {

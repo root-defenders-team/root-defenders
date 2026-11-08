@@ -34,17 +34,73 @@ const char* priorityText(TargetPriority priority) {
     return "first";
 }
 
+const char* RESET_COLOR = "\033[0m"; ///< Volta o terminal para a cor padrão.
+
+/// Cor ANSI de cada símbolo do mapa; "" para os que ficam na cor padrão.
+const char* colorFor(char symbol) {
+    switch (symbol) {
+        case '#':
+            return "\033[33m";   // caminho: amarelo
+        case 'X':
+            return "\033[90m";   // obstáculo: cinza
+        case 'E':
+            return "\033[1;36m"; // entrada: ciano
+        case '@':
+            return "\033[1;35m"; // /root: magenta
+        case 'F':
+        case 'A':
+        case 'S':
+            return "\033[1;32m"; // defesas: verde
+        case 'v':
+        case 'w':
+        case 'r':
+            return "\033[1;31m"; // malwares: vermelho
+        case '*':
+            return "\033[1;33m"; // projétil: amarelo forte
+    }
+    return "";
+}
+
+/// Escreve o número da linha alinhado em 2 posições, seguido de um espaço.
+void writeRowNumber(std::size_t y, std::ostream& out) {
+    if (y < 10) {
+        out << ' ';
+    }
+    out << y << ' ';
+}
+
+/// Escreve os números das colunas: a dezena (só se o mapa passar de 10) e a unidade.
+void writeColumnNumbers(std::size_t width, std::ostream& out) {
+    if (width > 10) {
+        out << "   ";
+        for (std::size_t x = 0; x < width; ++x) {
+            if (x < 10) {
+                out << ' ';
+            } else {
+                out << (x / 10) % 10;
+            }
+        }
+        out << "\n";
+    }
+    out << "   ";
+    for (std::size_t x = 0; x < width; ++x) {
+        out << x % 10;
+    }
+    out << "\n";
+}
+
 } // namespace
 
 TerminalRenderer::TerminalRenderer(bool useColors)
     : useColors(useColors) {
-    (void)this->useColors;
 }
 
 void TerminalRenderer::drawFrame(const GameManager& game, std::ostream& out) const {
     out << "\033[2J\033[H";
     drawHeader(game, out);
     drawMap(game, out);
+    out << "Legenda: E entrada | @ /root | # caminho | X obstáculo | . livre | * projétil\n"
+        << "Defesas: F firewall, A antivírus, S scanner | Malwares: v vírus, w worm, r rootkit\n";
 }
 
 void TerminalRenderer::drawHeader(const GameManager& game, std::ostream& out) const {
@@ -119,8 +175,22 @@ void TerminalRenderer::drawMap(const GameManager& game, std::ostream& out) const
         }
     }
 
+    writeColumnNumbers(width, out);
     for (std::size_t y = 0; y < height; ++y) {
-        out << grid[y] << "\n";
+        writeRowNumber(y, out);
+        if (!useColors) {
+            out << grid[y] << "\n";
+            continue;
+        }
+        for (std::size_t x = 0; x < width; ++x) {
+            const char* color = colorFor(grid[y][x]);
+            if (color[0] == '\0') {
+                out << grid[y][x];
+            } else {
+                out << color << grid[y][x] << RESET_COLOR;
+            }
+        }
+        out << "\n";
     }
 }
 

@@ -14,23 +14,23 @@ const float PROJECTILE_SIZE = 0.2f;
 Projectile::Projectile(const Vector2& startPosition, Enemy& target,
                        float speed, float damage)
     : Entity(startPosition.x, startPosition.y, PROJECTILE_SIZE, PROJECTILE_SIZE),
-      target_(&target),
-      speed_(speed),
-      damage_(damage),
-      impacted_(false) {
-    if (!std::isfinite(speed_) || speed_ <= 0.0f ||
-        !std::isfinite(damage_) || damage_ <= 0.0f) {
+      target(&target),
+      speed(speed),
+      damage(damage),
+      impacted(false) {
+    if (!std::isfinite(this->speed) || this->speed <= 0.0f ||
+        !std::isfinite(this->damage) || this->damage <= 0.0f) {
         throw std::invalid_argument(
             "A velocidade e o dano devem ser positivos e finitos.");
     }
 }
 
 void Projectile::update(float deltaTime) {
-    if (!active || impacted_) {
+    if (!active || impacted) {
         return;
     }
 
-    if (target_ == nullptr || !target_->isActive() || target_->isDead()) {
+    if (target == nullptr || !target->isActive() || target->isDead()) {
         setActive(false);
         return;
     }
@@ -39,10 +39,10 @@ void Projectile::update(float deltaTime) {
         return;
     }
 
-    const Vector2 targetPosition = target_->getPosition();
+    const Vector2 targetPosition = target->getPosition();
     const Vector2 direction = targetPosition - position;
     const float distance = direction.length();
-    const float travelDistance = speed_ * deltaTime;
+    const float travelDistance = speed * deltaTime;
 
     if (distance <= travelDistance) {
         position = targetPosition;
@@ -60,34 +60,34 @@ char Projectile::getSymbol() const {
 }
 
 void Projectile::hit() {
-    if (!active || impacted_) {
+    if (!active || impacted) {
         return;
     }
 
-    if (target_ == nullptr || !target_->isActive() || target_->isDead()) {
+    if (target == nullptr || !target->isActive() || target->isDead()) {
         setActive(false);
         return;
     }
 
-    target_->takeDamage(damage_);
-    impacted_ = true;
+    target->takeDamage(damage);
+    impacted = true;
     setActive(false);
 }
 
 bool Projectile::hasImpacted() const {
-    return impacted_;
+    return impacted;
 }
 
 const Enemy* Projectile::getTarget() const {
-    return target_;
+    return target;
 }
 
 float Projectile::getSpeed() const {
-    return speed_;
+    return speed;
 }
 
 float Projectile::getDamage() const {
-    return damage_;
+    return damage;
 }
 
 void Projectile::setSpeed(float newSpeed) {
@@ -96,7 +96,7 @@ void Projectile::setSpeed(float newSpeed) {
             "A velocidade deve ser positiva e finita.");
     }
 
-    speed_ = newSpeed;
+    speed = newSpeed;
 }
 
 void Projectile::setDamage(float newDamage) {
@@ -104,5 +104,5 @@ void Projectile::setDamage(float newDamage) {
         throw std::invalid_argument("O dano deve ser positivo e finito.");
     }
 
-    damage_ = newDamage;
+    damage = newDamage;
 }

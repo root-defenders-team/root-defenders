@@ -40,16 +40,16 @@ public:
     void hit();
 
     /** @brief Informa se o projétil atingiu o alvo. */
-    [[nodiscard]] bool hasImpacted() const;
+    bool hasImpacted() const;
 
     /** @brief Retorna o alvo sem transferir sua posse. */
-    [[nodiscard]] const Enemy* getTarget() const;
+    const Enemy* getTarget() const;
 
     /** @brief Retorna a velocidade do projétil. */
-    [[nodiscard]] float getSpeed() const;
+    float getSpeed() const;
 
     /** @brief Retorna o dano causado no impacto. */
-    [[nodiscard]] float getDamage() const;
+    float getDamage() const;
 
     /**
      * @brief Define a velocidade do projétil.
@@ -64,10 +64,10 @@ public:
     void setDamage(float newDamage);
 
 private:
-    Enemy* target_; ///< Alvo não proprietário, mantido pelo gerenciador.
-    float speed_; ///< Velocidade em unidades por segundo.
-    float damage_; ///< Dano causado no impacto.
-    bool impacted_; ///< Indica se o projétil já atingiu o alvo.
+    Enemy* target; ///< Alvo não proprietário, mantido pelo gerenciador.
+    float speed; ///< Velocidade em unidades por segundo.
+    float damage; ///< Dano causado no impacto.
+    bool impacted; ///< Indica se o projétil já atingiu o alvo.
 };
 
 #endif // PROJECTILE_HPP

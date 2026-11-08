@@ -46,7 +46,9 @@ TEST_CASE("armor reduces damage by three with a minimum of one") {
     enemy.takeDamage(0.0f);
     CHECK(enemy.getHp() == doctest::Approx(112.0f));
 
-    CHECK_THROWS_AS(enemy.takeDamage(-5.0f), std::invalid_argument);
+    CHECK_THROWS_WITH(
+        enemy.takeDamage(-5.0f),
+        "A quantidade de dano não pode ser negativa.");
     CHECK(enemy.getHp() == doctest::Approx(112.0f));
 }
 

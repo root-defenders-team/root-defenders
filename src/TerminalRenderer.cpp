@@ -34,11 +34,30 @@ const char* priorityText(TargetPriority priority) {
     return "first";
 }
 
-const char* RESET_COLOR = "\033[0m"; ///< Volta o terminal para a cor padrão.
+const char* RESET_COLOR = "\033[0m";    ///< Volta o terminal para a cor padrão.
+const char* BOLD_CYAN = "\033[1;36m";   ///< Destaque em ciano para títulos e bordas.
+const char* BOLD_YELLOW = "\033[1;33m"; ///< Destaque em amarelo para CPU.
+const char* BOLD_GREEN = "\033[1;32m";  ///< Destaque em verde para integridade alta.
+const char* BOLD_RED = "\033[1;31m";    ///< Destaque em vermelho para integridade crítica.
+const char* BOLD_MAGENTA = "\033[1;35m";///< Destaque em magenta para pontuação.
+const char* DIM_COLOR = "\033[90m";     ///< Cinza discreto para coordenadas e divisórias.
+
+/// Escolhe a cor da integridade conforme o estado do /root.
+const char* integrityColorFor(int integrity) {
+    if (integrity >= 70) {
+        return BOLD_GREEN;
+    }
+    if (integrity >= 35) {
+        return BOLD_YELLOW;
+    }
+    return BOLD_RED;
+}
 
 /// Cor ANSI de cada símbolo do mapa; "" para os que ficam na cor padrão.
 const char* colorFor(char symbol) {
     switch (symbol) {
+        case '.':
+            return "\033[90m";   // célula livre: cinza discreto
         case '#':
             return "\033[33m";   // caminho: amarelo
         case 'X':
@@ -62,15 +81,24 @@ const char* colorFor(char symbol) {
 }
 
 /// Escreve o número da linha alinhado em 2 posições, seguido de um espaço.
-void writeRowNumber(std::size_t y, std::ostream& out) {
+void writeRowNumber(std::size_t y, bool useColors, std::ostream& out) {
+    if (useColors) {
+        out << DIM_COLOR;
+    }
     if (y < 10) {
         out << ' ';
     }
     out << y << ' ';
+    if (useColors) {
+        out << RESET_COLOR;
+    }
 }
 
 /// Escreve os números das colunas: a dezena (só se o mapa passar de 10) e a unidade.
-void writeColumnNumbers(std::size_t width, std::ostream& out) {
+void writeColumnNumbers(std::size_t width, bool useColors, std::ostream& out) {
+    if (useColors) {
+        out << DIM_COLOR;
+    }
     if (width > 10) {
         out << "   ";
         for (std::size_t x = 0; x < width; ++x) {
@@ -86,6 +114,9 @@ void writeColumnNumbers(std::size_t width, std::ostream& out) {
     for (std::size_t x = 0; x < width; ++x) {
         out << x % 10;
     }
+    if (useColors) {
+        out << RESET_COLOR;
+    }
     out << "\n";
 }
 
@@ -99,15 +130,47 @@ void TerminalRenderer::drawFrame(const GameManager& game, std::ostream& out) con
     out << "\033[2J\033[H";
     drawHeader(game, out);
     drawMap(game, out);
-    out << "Legenda: E entrada | @ /root | # caminho | X obstáculo | . livre | * projétil\n"
-        << "Defesas: F firewall, A antivírus, S scanner | Malwares: v vírus, w worm, r rootkit\n";
+    if (useColors) {
+        out << DIM_COLOR << "------------------------------------------------------------"
+            << RESET_COLOR << "\n"
+            << BOLD_CYAN << "Legenda:" << RESET_COLOR
+            << " \033[1;36mE\033[0m entrada | \033[1;35m@\033[0m /root | "
+            << "\033[33m#\033[0m caminho | \033[90mX\033[0m obstáculo | "
+            << "\033[90m.\033[0m livre | \033[1;33m*\033[0m projétil\n"
+            << BOLD_CYAN << "Defesas:" << RESET_COLOR
+            << " \033[1;32mF\033[0m firewall, \033[1;32mA\033[0m antivírus, "
+            << "\033[1;32mS\033[0m scanner | "
+            << BOLD_CYAN << "Malwares:" << RESET_COLOR
+            << " \033[1;31mv\033[0m vírus, \033[1;31mw\033[0m worm, "
+            << "\033[1;31mr\033[0m rootkit\n"
+            << DIM_COLOR << "============================================================"
+            << RESET_COLOR << "\n";
+    } else {
+        out << "Legenda: E entrada | @ /root | # caminho | X obstáculo | . livre | * projétil\n"
+            << "Defesas: F firewall, A antivírus, S scanner | Malwares: v vírus, w worm, r rootkit\n";
+    }
 }
 
 void TerminalRenderer::drawHeader(const GameManager& game, std::ostream& out) const {
-    out << "CPU: " << game.getGold()
-        << " | Integridade: " << game.getRootIntegrity()
-        << " | Onda: " << game.getCurrentWave() << "/" << game.getTotalWaves()
-        << " | Pontos: " << game.getScore() << "\n";
+    if (!useColors) {
+        out << "CPU: " << game.getGold()
+            << " | Integridade: " << game.getRootIntegrity()
+            << " | Onda: " << game.getCurrentWave() << "/" << game.getTotalWaves()
+            << " | Pontos: " << game.getScore() << "\n";
+        return;
+    }
+
+    out << BOLD_CYAN << "==================== [ ROOT DEFENSE ] ===================="
+        << RESET_COLOR << "\n"
+        << BOLD_YELLOW << "CPU: " << game.getGold() << RESET_COLOR
+        << " | " << integrityColorFor(game.getRootIntegrity())
+        << "Integridade: " << game.getRootIntegrity() << RESET_COLOR
+        << " | " << BOLD_CYAN
+        << "Onda: " << game.getCurrentWave() << "/" << game.getTotalWaves() << RESET_COLOR
+        << " | " << BOLD_MAGENTA
+        << "Pontos: " << game.getScore() << RESET_COLOR << "\n"
+        << DIM_COLOR << "------------------------------------------------------------"
+        << RESET_COLOR << "\n";
 }
 
 void TerminalRenderer::drawMap(const GameManager& game, std::ostream& out) const {
@@ -175,9 +238,9 @@ void TerminalRenderer::drawMap(const GameManager& game, std::ostream& out) const
         }
     }
 
-    writeColumnNumbers(width, out);
+    writeColumnNumbers(width, useColors, out);
     for (std::size_t y = 0; y < height; ++y) {
-        writeRowNumber(y, out);
+        writeRowNumber(y, useColors, out);
         if (!useColors) {
             out << grid[y] << "\n";
             continue;
@@ -196,6 +259,9 @@ void TerminalRenderer::drawMap(const GameManager& game, std::ostream& out) const
 
 void TerminalRenderer::drawTowerList(const GameManager& game, std::ostream& out) const {
     const std::vector<std::unique_ptr<Tower> >& towers = game.getTowers();
+    if (useColors) {
+        out << BOLD_CYAN << "=== DEFESAS INSTALADAS ===" << RESET_COLOR << "\n";
+    }
     if (towers.empty()) {
         out << "Nenhuma defesa instalada.\n";
         return;
@@ -216,7 +282,11 @@ void TerminalRenderer::drawTowerList(const GameManager& game, std::ostream& out)
 
 void TerminalRenderer::drawRanking(const ScoreBoard& board, std::ostream& out) const {
     const std::vector<ScoreEntry>& entries = board.getEntries();
-    out << "=== RANKING ===\n";
+    if (useColors) {
+        out << BOLD_CYAN << "=== RANKING ===" << RESET_COLOR << "\n";
+    } else {
+        out << "=== RANKING ===\n";
+    }
     if (entries.empty()) {
         out << "Nenhuma pontuacao registrada.\n";
         return;

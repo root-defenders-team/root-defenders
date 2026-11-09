@@ -109,6 +109,20 @@ TEST_CASE("drawMap pinta os simbolos quando as cores estao ligadas") {
     CHECK(out.str().find("\033[1;35m@\033[0m") != std::string::npos);
 }
 
+TEST_CASE("drawFrame organiza cabecalho e divisores ANSI quando as cores estao ligadas") {
+    GameManager game(makeRendererTestMap(), makeRendererTestWaves());
+    TerminalRenderer renderer(true);
+    std::ostringstream out;
+
+    renderer.drawFrame(game, out);
+    std::string frame = out.str();
+
+    CHECK(frame.find("ROOT DEFENSE") != std::string::npos);
+    CHECK(frame.find("\033[1;33mCPU: 200\033[0m") != std::string::npos);
+    CHECK(frame.find("\033[1;32mIntegridade: 100\033[0m") != std::string::npos);
+    CHECK(frame.find("Legenda:") != std::string::npos);
+}
+
 TEST_CASE("drawFrame limpa a tela e desenha cabecalho e mapa") {
     GameManager game(makeRendererTestMap(), makeRendererTestWaves());
     TerminalRenderer renderer(false);

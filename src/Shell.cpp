@@ -185,7 +185,7 @@ void Shell::run() {
 
     std::string line;
     while (!isGameOver(game)) {
-        output << PROMPT;
+        output << "\033[1;32m" << PROMPT << "\033[0m";
         // Fim da entrada (Ctrl+D ou fim de um arquivo redirecionado) vale como exit.
         if (!std::getline(input, line)) {
             output << '\n';

@@ -23,6 +23,8 @@ const CommandRule RULES[] = {
     {"ls", 0, "ls"},
     {"man", 1, "man <nome>"},
     {"run", 0, "run"},
+    {"ranking", 0, "ranking"},
+    {"rank", 0, "rank"},
     {"exit", 0, "exit"}
 };
 

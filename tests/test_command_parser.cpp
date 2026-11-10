@@ -51,6 +51,8 @@ TEST_CASE("accepts every command of the game") {
     CHECK(CommandParser::parse("ls").args.empty());
     CHECK(CommandParser::parse("man rootkit").args.size() == 1);
     CHECK(CommandParser::parse("run").args.empty());
+    CHECK(CommandParser::parse("ranking").args.empty());
+    CHECK(CommandParser::parse("rank").args.empty());
     CHECK(CommandParser::parse("exit").args.empty());
 }
 

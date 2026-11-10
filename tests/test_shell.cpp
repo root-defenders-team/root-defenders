@@ -222,7 +222,11 @@ TEST_CASE_FIXTURE(ShellTest, "help, ls, man and ranking print information") {
 
     output.str("");
     shell.execute("ranking");
-    CHECK_FALSE(output.str().empty());
+    CHECK(contains(output, "=== RANKING ==="));
+
+    output.str("");
+    shell.execute("rank");
+    CHECK(contains(output, "=== RANKING ==="));
 }
 
 TEST_CASE_FIXTURE(ShellTest, "run plays the whole wave") {

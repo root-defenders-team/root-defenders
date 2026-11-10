@@ -226,7 +226,7 @@ bool Shell::execute(const std::string& line) {
             } else {
                 output << "erro: não há onda para iniciar agora\n";
             }
-        } else if (command.name == "ranking") {
+        } else if (command.name == "ranking" || command.name == "rank") {
             renderer.drawRanking(scoreBoard, output);
         } else {
             output << "erro: comando desconhecido: " << command.name << '\n';

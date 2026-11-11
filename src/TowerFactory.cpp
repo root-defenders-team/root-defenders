@@ -20,13 +20,13 @@ std::unique_ptr<Tower> TowerFactory::create(TowerType type, const Cell& cell) {
 }
 
 TowerType TowerFactory::parseType(const std::string& name) {
-    if (name == "firewall") {
+    if (name == "firewall" || name == "Firewall") {
         return TowerType::Firewall;
     }
-    if (name == "antivirus") {
+    if (name == "antivirus" || name == "Antivirus") {
         return TowerType::Antivirus;
     }
-    if (name == "scanner") {
+    if (name == "scanner" || name == "Scanner") {
         return TowerType::Scanner;
     }
     throw std::invalid_argument("Nome de defesa desconhecido: " + name);

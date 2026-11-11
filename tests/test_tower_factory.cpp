@@ -12,13 +12,17 @@ TEST_SUITE("TowerFactory") {
 
 TEST_CASE("parseType converte nomes validos para TowerType") {
     CHECK(TowerFactory::parseType("firewall") == TowerType::Firewall);
+    CHECK(TowerFactory::parseType("Firewall") == TowerType::Firewall);
     CHECK(TowerFactory::parseType("antivirus") == TowerType::Antivirus);
+    CHECK(TowerFactory::parseType("Antivirus") == TowerType::Antivirus);
     CHECK(TowerFactory::parseType("scanner") == TowerType::Scanner);
+    CHECK(TowerFactory::parseType("Scanner") == TowerType::Scanner);
 }
 
 TEST_CASE("parseType lanca invalid_argument para nome desconhecido") {
     CHECK_THROWS_AS(TowerFactory::parseType("laser"), std::invalid_argument);
     CHECK_THROWS_AS(TowerFactory::parseType("FIREWALL"), std::invalid_argument);
+    CHECK_THROWS_AS(TowerFactory::parseType("fIrewall"), std::invalid_argument);
     CHECK_THROWS_AS(TowerFactory::parseType(""), std::invalid_argument);
 }
 

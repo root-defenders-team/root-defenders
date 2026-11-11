@@ -103,6 +103,16 @@ TEST_CASE_FIXTURE(ShellTest, "install builds a tower and charges its cost") {
     CHECK(contains(output, "instalado em (2, 0)"));
 }
 
+TEST_CASE_FIXTURE(ShellTest, "install accepts a defense name with only its first letter capitalized") {
+    Cell cell = {2, 0};
+
+    CHECK(shell.execute("install Firewall 2 0"));
+
+    REQUIRE(game.getTowerAt(cell) != nullptr);
+    CHECK(game.getTowerAt(cell)->getSymbol() == 'F');
+    CHECK(contains(output, "instalado em (2, 0)"));
+}
+
 TEST_CASE_FIXTURE(ShellTest, "install refuses the path, obstacles, outside and occupied cells") {
     shell.execute("install firewall 2 1");
     CHECK(contains(output, "caminho"));

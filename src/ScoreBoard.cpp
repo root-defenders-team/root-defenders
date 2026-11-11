@@ -88,6 +88,10 @@ void ScoreBoard::save() const {
     for (std::size_t i = 0; i < entries.size(); ++i) {
         file << entries[i].score << ';' << entries[i].wave << ';' << entries[i].name << '\n';
     }
+    file.close();
+    if (!file) {
+        throw GameException("não foi possível gravar o ranking em " + filePath);
+    }
 }
 
 bool ScoreBoard::qualifies(int score) const {

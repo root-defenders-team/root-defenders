@@ -37,7 +37,7 @@ public:
 
     /**
      * @brief Grava as entradas no arquivo, uma por linha.
-     * @throws GameException se não for possível abrir o arquivo para escrita.
+     * @throws GameException se não for possível abrir ou gravar o arquivo.
      */
     void save() const;
 

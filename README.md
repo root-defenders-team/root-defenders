@@ -48,6 +48,31 @@ make docs       # Gera a documentação Doxygen em build/docs/html
 make clean      # Remove os arquivos gerados em build/obj, build/bin e build/docs
 ```
 
+Sem argumentos, o jogo usa `assets/maps/level1.txt`. Para escolher outro mapa,
+passe o caminho do arquivo ao iniciar o executável:
+
+```bash
+./build/bin/root_defense assets/maps/level2.txt
+./build/bin/root_defense assets/maps/level3.txt
+./build/bin/root_defense assets/maps/level4.txt
+./build/bin/root_defense assets/maps/level5.txt
+```
+
+Os cinco mapas usam as mesmas oito ondas de `assets/waves.txt`. O caminho é
+relativo à pasta em que o comando é executado. Um mapa inexistente ou inválido
+mostra uma mensagem de erro; argumentos em excesso mostram a forma de uso.
+
+Os mapas têm dificuldade crescente: as rotas ficam mais curtas e há menos células
+livres para instalar defesas. O mapa 1 mantém seu desenho original.
+
+| Mapa | Dificuldade | Células da rota | Células livres |
+|---|---|---|---|
+| `level1.txt` | Muito fácil | 37 | 159 |
+| `level2.txt` | Fácil | 33 | 147 |
+| `level3.txt` | Médio | 28 | 132 |
+| `level4.txt` | Difícil | 24 | 97 |
+| `level5.txt` | Muito difícil | 20 | 54 |
+
 ---
 
 ## Como Jogar
@@ -159,7 +184,12 @@ Nenhuma entrada inválida do usuário ou erro em arquivo derruba o programa de f
 ├── src/                    # Implementações (.cpp) + main.cpp
 ├── tests/                  # Testes de unidade com doctest
 ├── assets/
-│   ├── maps/level1.txt     # Grade do mapa (E, @, #, ., X)
+│   ├── maps/
+│   │   ├── level1.txt     # Mapa padrão (E, @, #, ., X)
+│   │   ├── level2.txt     # Fácil
+│   │   ├── level3.txt     # Médio
+│   │   ├── level4.txt     # Difícil
+│   │   └── level5.txt     # Muito difícil
 │   ├── waves.txt           # Definição das 8 ondas (<onda> <tipo> <qtd> <intervalo>)
 │   └── ranking.txt         # Top 5 pontuações (<pontos>;<onda>;<nome>)
 ├── design/                 # User stories e cartões CRC

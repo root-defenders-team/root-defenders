@@ -13,7 +13,7 @@
 
 namespace {
 
-const char* MAP_PATH = "assets/maps/level1.txt"; ///< Mapa da fase.
+const char* MAP_PATH = "assets/maps/level1.txt"; ///< Mapa padrão da fase.
 const char* WAVES_PATH = "assets/waves.txt";     ///< Ondas da fase.
 const char* RANKING_PATH = "assets/ranking.txt"; ///< Ranking, criado pelo jogo se não existir.
 
@@ -26,11 +26,23 @@ const char* RANKING_PATH = "assets/ranking.txt"; ///< Ranking, criado pelo jogo 
  * Shell. Arquivo de dados inválido mostra o arquivo, a linha e o motivo; qualquer
  * outro erro inesperado também é mostrado. Nos dois casos, o programa sai com código 1.
  *
+ * @param argc Quantidade de argumentos, incluindo o nome do programa.
+ * @param argv Nome do programa e caminho opcional do mapa.
  * @return 0 quando o jogo termina normalmente; 1 em caso de erro.
  */
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc > 2) {
+        std::cerr << "Uso: " << argv[0] << " [arquivo_do_mapa]" << std::endl;
+        return 1;
+    }
+
+    const char* mapPath = MAP_PATH;
+    if (argc == 2) {
+        mapPath = argv[1];
+    }
+
     try {
-        Map map = MapLoader::load(MAP_PATH);
+        Map map = MapLoader::load(mapPath);
         std::vector<Wave> waves = WaveLoader::load(WAVES_PATH);
         GameManager game(map, waves);
         ScoreBoard scoreBoard(RANKING_PATH);

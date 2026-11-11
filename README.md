@@ -48,8 +48,9 @@ make docs       # Gera a documentação Doxygen em build/docs/html
 make clean      # Remove os arquivos gerados em build/obj, build/bin e build/docs
 ```
 
-Sem argumentos, o jogo usa `assets/maps/level1.txt`. Para escolher outro mapa,
-passe o caminho do arquivo ao iniciar o executável:
+Sem argumentos (`make run`), o jogo exibe um menu interativo permitindo escolher
+entre os 5 níveis de dificuldade (`level1.txt` a `level5.txt`). Também é possível
+passar o caminho do mapa diretamente ao iniciar o executável:
 
 ```bash
 ./build/bin/root_defense assets/maps/level2.txt
@@ -105,7 +106,8 @@ As coordenadas `(x, y)` aparecem numeradas nas bordas do mapa: `x` é a coluna (
 | `upgrade <x> <y>` | Evolui a defesa da célula `(x, y)` (nível máximo: 3) | `upgrade 4 3` |
 | `rm <x> <y>` | Remove a defesa da célula `(x, y)` e devolve 50% da CPU investida | `rm 4 3` |
 | `target <x> <y> <prioridade>` | Define a prioridade de alvo da defesa (`first`, `strong`, `weak` ou `close`) | `target 4 3 strong` |
-| `ls` | Lista todas as defesas instaladas, níveis, atributos e prioridades | `ls` |
+| `ls` | Lista todas as defesas instaladas, níveis, atributos, prioridades e custos | `ls` |
+| `status` (ou `map`) | Redesenha o mapa e o cabeçalho de status da partida | `status` |
 | `man <nome>` | Exibe o manual e os atributos de uma defesa ou malware | `man rootkit` |
 | `run` | Inicia a próxima onda de ataque | `run` |
 | `ranking` (ou `rank`) | Mostra as 5 melhores pontuações registradas | `ranking` |

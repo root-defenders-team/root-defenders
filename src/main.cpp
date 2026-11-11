@@ -1,5 +1,6 @@
 #include <exception>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "FileFormatException.hpp"
@@ -16,6 +17,33 @@ namespace {
 const char* MAP_PATH = "assets/maps/level1.txt"; ///< Mapa padrão da fase.
 const char* WAVES_PATH = "assets/waves.txt";     ///< Ondas da fase.
 const char* RANKING_PATH = "assets/ranking.txt"; ///< Ranking, criado pelo jogo se não existir.
+
+/// Mostra o menu inicial e devolve o caminho do mapa escolhido pelo jogador.
+std::string selectMapFromMenu() {
+    std::cout << "\033[1;36m==================== [ ROOT DEFENSE ] ====================\033[0m\n"
+              << "Selecione o nível de dificuldade do servidor:\n"
+              << "  1. Nível 1 - Muito fácil   (assets/maps/level1.txt)\n"
+              << "  2. Nível 2 - Fácil         (assets/maps/level2.txt)\n"
+              << "  3. Nível 3 - Médio         (assets/maps/level3.txt)\n"
+              << "  4. Nível 4 - Difícil       (assets/maps/level4.txt)\n"
+              << "  5. Nível 5 - Muito difícil (assets/maps/level5.txt)\n"
+              << "Escolha [1-5] (Enter para Nível 1): ";
+
+    std::string choice;
+    if (!std::getline(std::cin, choice)) {
+        return MAP_PATH;
+    }
+
+    std::size_t first = choice.find_first_not_of(" \t\r");
+    if (first == std::string::npos) {
+        return MAP_PATH;
+    }
+    char option = choice[first];
+    if (option >= '1' && option <= '5') {
+        return std::string("assets/maps/level") + option + ".txt";
+    }
+    return MAP_PATH;
+}
 
 } // namespace
 
@@ -36,9 +64,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const char* mapPath = MAP_PATH;
+    std::string mapPath = MAP_PATH;
     if (argc == 2) {
         mapPath = argv[1];
+    } else {
+        mapPath = selectMapFromMenu();
     }
 
     try {

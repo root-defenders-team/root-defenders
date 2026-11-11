@@ -49,6 +49,8 @@ TEST_CASE("accepts every command of the game") {
     CHECK(CommandParser::parse("rm 1 2").args.size() == 2);
     CHECK(CommandParser::parse("target 1 2 weak").args.size() == 3);
     CHECK(CommandParser::parse("ls").args.empty());
+    CHECK(CommandParser::parse("status").args.empty());
+    CHECK(CommandParser::parse("map").args.empty());
     CHECK(CommandParser::parse("man rootkit").args.size() == 1);
     CHECK(CommandParser::parse("run").args.empty());
     CHECK(CommandParser::parse("ranking").args.empty());

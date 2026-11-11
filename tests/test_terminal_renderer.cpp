@@ -150,6 +150,8 @@ TEST_CASE("drawTowerList e drawRanking exibem informacoes formatadas") {
     REQUIRE(game.buildTower(util::makeUnique<FirewallTower>(towerCell)));
     renderer.drawTowerList(game, out);
     CHECK(out.str().find("(1, 0)") != std::string::npos);
+    CHECK(out.str().find("Upgrade: ") != std::string::npos);
+    CHECK(out.str().find("Reembolso: ") != std::string::npos);
 
     out.str("");
     ScoreBoard board("build/test_renderer_ranking.txt");

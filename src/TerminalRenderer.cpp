@@ -276,7 +276,14 @@ void TerminalRenderer::drawTowerList(const GameManager& game, std::ostream& out)
             << " | Alcance: " << tower.getRange()
             << " | Dano: " << tower.getDamage()
             << " | Intervalo: " << tower.getFireInterval()
-            << " | Alvo: " << priorityText(tower.getTargetPriority()) << "\n";
+            << " | Alvo: " << priorityText(tower.getTargetPriority())
+            << " | Upgrade: ";
+        if (tower.canUpgrade()) {
+            out << tower.getUpgradeCost() << " CPU";
+        } else {
+            out << "MAX";
+        }
+        out << " | Reembolso: " << tower.getSellValue() << " CPU\n";
     }
 }
 

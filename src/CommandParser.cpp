@@ -21,6 +21,8 @@ const CommandRule RULES[] = {
     {"rm", 2, "rm <x> <y>"},
     {"target", 3, "target <x> <y> <prioridade>"},
     {"ls", 0, "ls"},
+    {"status", 0, "status"},
+    {"map", 0, "map"},
     {"man", 1, "man <nome>"},
     {"run", 0, "run"},
     {"ranking", 0, "ranking"},

@@ -153,6 +153,7 @@ void printHelp(std::ostream& output) {
            << "  target <x> <y> <prioridade>  first, strong, weak ou close "
            << "(target 5 3 strong)\n"
            << "  ls                           lista as defesas instaladas\n"
+           << "  status (ou map)              redesenha o mapa e o status da partida\n"
            << "  man <nome>                   manual de uma defesa ou malware (man rootkit)\n"
            << "  run                          inicia a próxima onda\n"
            << "  ranking                      mostra as 5 melhores pontuações\n"
@@ -216,6 +217,8 @@ bool Shell::execute(const std::string& line) {
             handleRemove(command);
         } else if (command.name == "target") {
             handleTarget(command);
+        } else if (command.name == "status" || command.name == "map") {
+            renderer.drawFrame(game, output);
         } else if (command.name == "ls") {
             renderer.drawTowerList(game, output);
         } else if (command.name == "man") {

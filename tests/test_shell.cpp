@@ -237,6 +237,22 @@ TEST_CASE_FIXTURE(ShellTest, "help, ls, man and ranking print information") {
     output.str("");
     shell.execute("rank");
     CHECK(contains(output, "=== RANKING ==="));
+
+    output.str("");
+    shell.execute("status");
+    CHECK(contains(output, "CPU: 200"));
+
+    output.str("");
+    shell.execute("map");
+    CHECK(contains(output, "Legenda:"));
+
+    output.str("");
+    shell.execute("status");
+    CHECK(contains(output, "CPU: 200"));
+
+    output.str("");
+    shell.execute("map");
+    CHECK(contains(output, "Legenda:"));
 }
 
 TEST_CASE_FIXTURE(ShellTest, "run plays the whole wave") {

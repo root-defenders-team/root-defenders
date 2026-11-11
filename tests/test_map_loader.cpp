@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 
+#include <cstddef>
 #include <cstdio>
 #include <fstream>
 #include <sstream>
@@ -184,6 +185,29 @@ TEST_CASE("carrega mapa de um arquivo real") {
     CHECK(map.getHeight() == 2);
     CHECK(map.isBlocked({1, 1}));
     CHECK(map.getWaypoints().size() == 3);
+}
+
+TEST_CASE("carrega os cinco mapas da fase") {
+    const char* paths[] = {
+        "assets/maps/level1.txt",
+        "assets/maps/level2.txt",
+        "assets/maps/level3.txt",
+        "assets/maps/level4.txt",
+        "assets/maps/level5.txt"
+    };
+    const std::size_t waypointCounts[] = {37, 33, 28, 24, 20};
+    const Cell entries[] = {{0, 0}, {0, 1}, {0, 0}, {0, 2}, {0, 4}};
+    const Cell destinations[] = {{16, 8}, {17, 8}, {19, 8}, {19, 6}, {19, 4}};
+
+    for (int i = 0; i < 5; ++i) {
+        Map map = MapLoader::load(paths[i]);
+
+        CHECK(map.getWidth() == 20);
+        CHECK(map.getHeight() == 10);
+        REQUIRE(map.getWaypoints().size() == waypointCounts[i]);
+        CHECK(map.getWaypoints().front() == entries[i]);
+        CHECK(map.getWaypoints().back() == destinations[i]);
+    }
 }
 
 TEST_CASE("informa arquivo e linha zero quando nao consegue abrir") {

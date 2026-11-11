@@ -146,6 +146,16 @@ TEST_CASE("abre um arquivo real de ondas") {
     CHECK(waves[0].getTotalEnemies() == 2);
 }
 
+TEST_CASE("carrega as oito ondas da fase") {
+    std::vector<Wave> waves = WaveLoader::load("assets/waves.txt");
+    const int enemyCounts[] = {3, 6, 5, 11, 14, 18, 23, 28};
+
+    REQUIRE(waves.size() == 8);
+    for (int i = 0; i < 8; ++i) {
+        CHECK(waves[i].getTotalEnemies() == enemyCounts[i]);
+    }
+}
+
 TEST_CASE("informa arquivo e linha zero quando nao consegue abrir") {
     const std::string filePath = "include/Wave.hpp/ondas.txt";
 

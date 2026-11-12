@@ -200,3 +200,69 @@ para tomar decisões sem sair do terminal.
   nível 3) e valor de reembolso em CPU.
 - Quando nenhuma defesa estiver instalada, `ls` informa
   `Nenhuma defesa instalada.`.
+
+---
+
+## 10. Seleção de nível por menu inicial ou CLI
+
+**Como administrador**, quero escolher entre os 5 mapas de dificuldade crescente
+no menu inicial ou informar um mapa diretamente pela linha de comando para
+variar o desafio da partida.
+
+### Critérios de aceitação
+
+- Ao executar o jogo sem argumentos (`./build/bin/root_defense` ou `make run`),
+  um menu interativo exibe os 5 níveis de dificuldade (`level1.txt` Muito fácil
+  até `level5.txt` Muito difícil).
+- Pressionar Enter sem digitar número, encerrar a entrada ou informar opção fora
+  de `1` a `5` seleciona o nível padrão `assets/maps/level1.txt`.
+- Ao passar um caminho de mapa como argumento na CLI
+  (`./build/bin/root_defense <arquivo_do_mapa>`), o jogo pula o menu e carrega
+  diretamente o arquivo informado com as 8 ondas de `assets/waves.txt`.
+- Informar argumentos em excesso na CLI exibe a mensagem de uso em `std::cerr`
+  e encerra o programa com código `1`.
+
+---
+
+## 11. Interface colorida ANSI e comandos informativos (`status`, `map` e `help`)
+
+**Como administrador**, quero visualizar o mapa com coordenadas e cores ANSI e
+consultar o estado da partida ou a lista de comandos a qualquer momento durante
+a preparação.
+
+### Critérios de aceitação
+
+- O `TerminalRenderer` desenha o cabeçalho (`ROOT DEFENSE`, CPU, Integridade com
+  cor verde `>= 70`, amarelo `>= 35` e vermelho `< 35`, Onda e Pontos), as
+  coordenadas `(x, y)` nas bordas e a legenda completa dos símbolos (`E`, `@`,
+  `#`, `X`, `.`, `*`, `F`, `A`, `S`, `v`, `w`, `r`).
+- Ao abrir o `Shell`, o quadro inicial e instruções rápidas de uso são exibidos
+  antes do prompt verde `root@server:~# `.
+- Os comandos `status` e `map` redesenham o quadro completo (`drawFrame`) sem
+  avançar ondas nem alterar o estado do jogo.
+- O comando `help` lista todos os comandos do Shell com sintaxe e exemplos;
+  `exit` ou fim de entrada (`Ctrl+D`) encerram o loop de forma limpa.
+
+---
+
+## 12. Programação defensiva e tratamento de erros (`erro: <motivo>` e linha)
+
+**Como administrador**, quero que comandos incorretos e arquivos de dados
+corrompidos sejam tratados com mensagens claras de erro sem causar encerramento
+inesperado do jogo.
+
+### Critérios de aceitação
+
+- Linhas vazias ou com apenas espaços no `Shell` são ignoradas silenciosamente.
+- Comandos desconhecidos, quantidade incorreta de argumentos, coordenadas não
+  inteiras ou prioridades inválidas lançam `InvalidCommandException` (subclasse
+  de `GameException`).
+- O `Shell` captura `GameException` e erros de validação sem encerrar a
+  partida, exibindo `erro: <motivo>` e mantendo o jogo pronto para o próximo
+  comando.
+- Arquivos de mapa (`MapLoader`) ou de ondas (`WaveLoader`) ausentes ou
+  corrompidos (linha vazia, largura irregular, caractere desconhecido, entrada/
+  destino ausente ou duplicado, caminho interrompido/bifurcado/desconectado ou
+  ondas fora de ordem) lançam `FileFormatException` informando o nome do arquivo
+  e o número exato da linha (`<arquivo>, linha <n>: <motivo>`), exibida em
+  `std::cerr` pelo `main()` com retorno `1`.

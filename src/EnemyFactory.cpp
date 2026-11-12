@@ -22,13 +22,13 @@ std::unique_ptr<Enemy> EnemyFactory::create(
 }
 
 EnemyType EnemyFactory::parseType(const std::string& name) {
-    if (name == "virus") {
+    if (name == "virus" || name == "Virus") {
         return EnemyType::Virus;
     }
-    if (name == "worm") {
+    if (name == "worm" || name == "Worm") {
         return EnemyType::Worm;
     }
-    if (name == "rootkit") {
+    if (name == "rootkit" || name == "Rootkit") {
         return EnemyType::Rootkit;
     }
 

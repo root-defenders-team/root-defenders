@@ -58,20 +58,6 @@ public:
     bool hasReachedEnd() const;
 
     /**
-     * @brief Sobrecarga legada com parâmetro para compatibilidade transitória.
-     * @param waypoints Rota a conferir.
-     * @return true se atingiu o último ponto da rota informada.
-     */
-    bool hasReachedEnd(const std::vector<Vector2>& waypoints) const;
-
-    /**
-     * @brief Método legado de compatibilidade transitória.
-     * @param waypoints Rota a percorrer.
-     * @param deltaTime Tempo decorrido desde a última atualização (em segundos).
-     */
-    void moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime);
-
-    /**
      * @brief Retorna os pontos de vida atuais.
      * @return Os pontos de vida atuais.
      */
@@ -112,12 +98,6 @@ public:
      * @return O índice do último ponto do caminho já alcançado.
      */
     std::size_t getWaypointIndex() const;
-
-    /**
-     * @brief Nome legado de getReward(), mantido por compatibilidade.
-     * @return A recompensa em CPU dada ao ser destruído.
-     */
-    int getGoldReward() const;
 
 protected:
     const std::vector<Vector2>& path; ///< Rota mantida pelo mapa (não proprietária).

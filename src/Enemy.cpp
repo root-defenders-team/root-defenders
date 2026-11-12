@@ -66,33 +66,6 @@ void Enemy::update(float deltaTime) {
     distanceTravelled += (startRemaining - remainingDistance);
 }
 
-void Enemy::moveAlongPath(const std::vector<Vector2>& waypoints, float deltaTime) {
-    if (hasReachedEnd(waypoints) || deltaTime <= 0.0f) {
-        return;
-    }
-
-    float remainingDistance = speed * deltaTime;
-    float startRemaining = remainingDistance;
-
-    while (remainingDistance > 0.0f && waypointIndex < waypoints.size()) {
-        Vector2 target = waypoints[waypointIndex];
-        float distanceToTarget = position.distanceTo(target);
-
-        if (distanceToTarget <= remainingDistance) {
-            position = target;
-            remainingDistance -= distanceToTarget;
-            waypointIndex++;
-        } else {
-            Vector2 direction = target - position;
-            Vector2 unitDirection = direction * (1.0f / distanceToTarget);
-            position = position + (unitDirection * remainingDistance);
-            remainingDistance = 0.0f;
-        }
-    }
-
-    distanceTravelled += (startRemaining - remainingDistance);
-}
-
 void Enemy::takeDamage(float amount) {
     if (amount < 0.0f) {
         throw std::invalid_argument("O dano recebido pelo inimigo não pode ser negativo.");
@@ -111,10 +84,6 @@ bool Enemy::hasReachedEnd() const {
     return waypointIndex >= path.size();
 }
 
-bool Enemy::hasReachedEnd(const std::vector<Vector2>& waypoints) const {
-    return waypointIndex >= waypoints.size();
-}
-
 float Enemy::getHp() const {
     return hp;
 }
@@ -128,10 +97,6 @@ float Enemy::getSpeed() const {
 }
 
 int Enemy::getReward() const {
-    return reward;
-}
-
-int Enemy::getGoldReward() const {
     return reward;
 }
 

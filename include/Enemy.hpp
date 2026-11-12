@@ -28,19 +28,6 @@ public:
     Enemy(const std::vector<Vector2>& path, float maxHp, float speed,
           int reward, int damageToRoot);
 
-    /**
-     * @brief Construtor legado mantido para compatibilidade transitória com testes de torres.
-     * @param startX Posição horizontal inicial.
-     * @param startY Posição vertical inicial.
-     * @param width Largura do inimigo.
-     * @param height Altura do inimigo.
-     * @param hp Pontos de vida iniciais.
-     * @param speed Velocidade de deslocamento (unidades por segundo).
-     * @param goldReward Recompensa em CPU concedida ao ser destruído.
-     */
-    Enemy(float startX, float startY, float width, float height,
-          float hp, float speed, int goldReward);
-
     virtual ~Enemy() = default;
 
     /**
@@ -141,9 +128,6 @@ protected:
     int damageToRoot;                 ///< Dano causado ao /root.
     std::size_t waypointIndex;        ///< Próximo waypoint a alcançar.
     float distanceTravelled;          ///< Distância percorrida acumulada.
-
-private:
-    std::vector<Vector2> fallbackPath_; ///< Usado quando chamado pelo construtor legado.
 };
 
 #endif // ENEMY_HPP

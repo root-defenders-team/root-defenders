@@ -6,7 +6,6 @@
 namespace {
 
 const float DEFAULT_ENEMY_SIZE = 0.6f;
-const int DEFAULT_DAMAGE_TO_ROOT = 10;
 
 } // namespace
 
@@ -38,20 +37,6 @@ Enemy::Enemy(const std::vector<Vector2>& path, float maxHp, float speed,
     if (damageToRoot <= 0) {
         throw std::invalid_argument("O dano do inimigo ao /root deve ser positivo.");
     }
-}
-
-Enemy::Enemy(float startX, float startY, float width, float height,
-             float hp, float speed, int goldReward)
-    : Entity(startX, startY, width, height),
-      path(fallbackPath_),
-      hp(hp),
-      maxHp(hp),
-      speed(speed),
-      reward(goldReward),
-      damageToRoot(DEFAULT_DAMAGE_TO_ROOT),
-      waypointIndex(0),
-      distanceTravelled(0.0f),
-      fallbackPath_({Vector2(startX, startY), Vector2(startX + 1000.0f, startY)}) {
 }
 
 void Enemy::update(float deltaTime) {

@@ -11,10 +11,18 @@
 
 namespace {
 
-class FakeEnemy : public Enemy {
+class FakeEnemyPath {
+protected:
+    std::vector<Vector2> path;
+
+    FakeEnemyPath(float x, float y)
+        : path{Vector2(x, y), Vector2(x + 1000.0f, y)} {}
+};
+
+class FakeEnemy : private FakeEnemyPath, public Enemy {
 public:
     FakeEnemy(float x, float y, float hp = 100.0f)
-        : Enemy(x, y, 0.6f, 0.6f, hp, 1.0f, 10) {}
+        : FakeEnemyPath(x, y), Enemy(FakeEnemyPath::path, hp, 1.0f, 10, 10) {}
 };
 
 } // namespace

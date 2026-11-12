@@ -38,10 +38,18 @@ protected:
     }
 };
 
-class DummyEnemy : public Enemy {
+class DummyEnemyPath {
+protected:
+    std::vector<Vector2> path;
+
+    DummyEnemyPath(float x, float y)
+        : path{Vector2(x, y), Vector2(x + 1000.0f, y)} {}
+};
+
+class DummyEnemy : private DummyEnemyPath, public Enemy {
 public:
     DummyEnemy(float x, float y, float hp = 100.0f, float distance = 0.0f)
-        : Enemy(x, y, 32.0f, 32.0f, hp, 10.0f, 20) {
+        : DummyEnemyPath(x, y), Enemy(DummyEnemyPath::path, hp, 10.0f, 20, 10) {
         distanceTravelled = distance;
     }
 };

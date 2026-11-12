@@ -15,9 +15,10 @@ Cada malware que atinge o `/root` reduz a integridade do sistema. Se a integrida
 3. [Como Jogar](#como-jogar)
 4. [Defesas e Malwares](#defesas-e-malwares)
 5. [Arquitetura e Orientação a Objetos](#arquitetura-e-orientação-a-objetos)
-6. [Programação Defensiva e Exceções](#programação-defensiva-e-exceções)
-7. [Estrutura do Repositório e Arquivos de Dados](#estrutura-do-repositório-e-arquivos-de-dados)
-8. [Integrantes](#integrantes)
+6. [Modelagem: User Stories e Cartões CRC](#modelagem-user-stories-e-cartões-crc)
+7. [Programação Defensiva e Exceções](#programação-defensiva-e-exceções)
+8. [Estrutura do Repositório e Arquivos de Dados](#estrutura-do-repositório-e-arquivos-de-dados)
+9. [Integrantes](#integrantes)
 
 ---
 
@@ -162,6 +163,51 @@ O sistema é dividido em **três camadas independentes**:
 - **Hierarquia `Enemy`**: herda de `Entity` e é especializada em `VirusEnemy`, `WormEnemy` e `RootkitEnemy`. `RootkitEnemy` sobrescreve polimorficamente `takeDamage(float)` para aplicar sua blindagem.
 - **Hierarquia `Tower` (Template Method)**: herda de `Entity` e é especializada em `FirewallTower`, `AntivirusTower` e `ScannerTower`. `Tower::tryAttack` implementa o padrão *Template Method*: verifica o cooldown, seleciona o alvo de acordo com a `TargetPriority` e delega o disparo para o método protegido polimórfico `fire(...)`, enquanto `upgrade()` valida e delega a melhoria específica para `applyUpgrade()`.
 - **Simple Factory (`TowerFactory` e `EnemyFactory`)**: encapsulam a instanciação das subclasses concretas a partir de `TowerType`/`EnemyType` ou strings lidas de comandos e arquivos.
+
+---
+
+## Modelagem: User Stories e Cartões CRC
+
+Os artefatos de levantamento de requisitos e projeto orientado a objetos ficam
+em `design/`, detalhando todas as funcionalidades entregues em
+`design/user-stories.md` e as responsabilidades de cada classe nos cartões de
+`design/CRC Maker.pdf`.
+
+### Resumo das 12 User Stories
+
+| ID | História | Escopo Principal |
+|---|---|---|
+| **US 01** | Instalação de defesas (`install`) | Posicionamento de `Firewall`, `Antivírus` ou `Scanner` em células livres `.` usando ciclos de CPU (`200` iniciais) |
+| **US 02** | Ataque automático das defesas | Detecção no alcance, *cooldown*, disparo de projéteis (`*`) ou dano em área (`Scanner`) e ganho de CPU/pontos |
+| **US 03** | Evolução das defesas (`upgrade`) | Melhoria até o nível `3` com custo `custo_base × L × 3 / 4` (cadência, dano ou alcance por subclasse) |
+| **US 04** | Movimento dos malwares e integridade | Trajeto `E` → `@` de `Vírus`, `Worm` e `Rootkit` (blindagem `-3`) reduzindo a integridade inicial de `100%` do `/root` |
+| **US 05** | Ondas de ataque e vitória (`run`) | Execução das 8 ondas de `assets/waves.txt` em ticks de `0,1 s`, bônus por onda/vitória e *Kernel Panic* na derrota |
+| **US 06** | Ranking top 5 persistente (`ranking`/`rank`) | Carga/gravação de `assets/ranking.txt` (`<pontos>;<onda>;<nome>`), sanitização de nome e tolerância a linhas corrompidas |
+| **US 07** | Remoção e reembolso (`rm`) | Desinstalação de defesa liberando a célula e devolvendo `50%` de toda a CPU investida |
+| **US 08** | Prioridade de alvo (`target`) | Seleção dinâmica de mira por defesa entre `first`, `strong`, `weak` e `close` |
+| **US 09** | Manual e listagem (`man` e `ls`) | Consulta de atributos de defesas/malwares (`man`) e tabela de defesas com custos de evolução e reembolso (`ls`) |
+| **US 10** | Seleção de nível (menu ou CLI) | Menu interativo com 5 mapas de dificuldade crescente (`level1.txt` a `level5.txt`) ou caminho direto na linha de comando |
+| **US 11** | Interface ANSI e comandos informativos | Mapa colorido com coordenadas e legenda, redesenho por `status`/`map`, lista de comandos (`help`) e saída (`exit`) |
+| **US 12** | Programação defensiva e exceções | Mensagens `erro: <motivo>` no `Shell` (`InvalidCommandException`) e arquivo/linha exata em `FileFormatException` |
+
+### Classes dos Cartões CRC
+
+- **Núcleo de Entidades e Simulação (`design/CRC Maker.pdf`)**:
+  - `Entity` *(abstrata; subclasses `Tower`, `Enemy`, `Projectile`)*: posição `(x, y)`, dimensões, colisão AABB (`Rect`), estado ativo e contrato `update(float)` / `getSymbol()`. Colaboradores: `Map`, `GameManager`.
+  - `Tower` *(abstrata; subclasses `FirewallTower`, `AntivirusTower`, `ScannerTower`)*: alcance, dano, intervalo, cooldown, nível (máx. `3`), `TargetPriority`, *Template Method* em `tryAttack(...)`/`upgrade()` e valor de reembolso (`50%`). Colaboradores: `Entity`, `Enemy`, `Projectile`, `Map`, `GameManager`.
+  - `FirewallTower`, `AntivirusTower`, `ScannerTower`: especializam `fire(...)` (projétil rápido, projétil pesado e dano em área) e `applyUpgrade()` (cadência, dano e alcance). Colaboradores: `Tower`, `Enemy`, `Projectile`.
+  - `Enemy` *(abstrata; subclasses `VirusEnemy`, `WormEnemy`, `RootkitEnemy`)*: vida, velocidade, recompensa em CPU, dano ao `/root`, avanço pelos waypoints e `takeDamage(float)`. Colaboradores: `Entity`, `Map`, `Tower`, `Projectile`, `GameManager`.
+  - `VirusEnemy`, `WormEnemy`, `RootkitEnemy`: definem balanceamento e símbolos (`v`, `w`, `r`); `RootkitEnemy` sobrescreve `takeDamage(float)` aplicando blindagem. Colaboradores: `Enemy`.
+  - `Projectile` *(herda de `Entity`)*: persegue o alvo ativo, aplica dano ao atingir e encerra a execução se o alvo cair antes do impacto. Colaboradores: `Entity`, `Tower`, `Enemy`, `GameManager`.
+  - `Map`: grade de células (`Buildable`, `Path`, `Blocked`), ocupação por defesas e sequência de waypoints (`getPath()`). Colaboradores: `Tower`, `Enemy`, `GameManager`, `MapLoader`.
+  - `Wave` *(com `SpawnGroup`)*: controla grupos de nascimento, intervalos e emissão de malwares por tick. Colaboradores: `EnemyType`, `GameManager`, `WaveLoader`.
+  - `GameManager`: máquina de estados (`Preparing`, `WaveRunning`, `Victory`, `Defeat`), orquestração dos ticks, posse exclusiva das entidades, CPU, integridade do `/root` e pontuação (sem persistência em arquivo). Colaboradores: `Map`, `Wave`, `Tower`, `Enemy`, `Projectile`, `EnemyFactory`.
+- **Fábricas (*Simple Factory*)**:
+  - `TowerFactory` e `EnemyFactory`: centralizam o parsing de nomes e a criação polimórfica de defesas e malwares em `std::unique_ptr`. Colaboradores: subclasses de `Tower` e `Enemy`, `Shell`, `GameManager`, `WaveLoader`.
+- **Interface de Terminal**:
+  - `Shell`, `CommandParser` e `TerminalRenderer`: ciclo REPL de comandos, validação sintática contra regras (`Command`) e renderização ANSI de cabeçalho, mapa, defesas e ranking. Colaboradores: `GameManager`, `ScoreBoard`, `TowerFactory`, `EnemyFactory`, `InvalidCommandException`.
+- **Persistência e Arquivos**:
+  - `MapLoader`, `WaveLoader` e `ScoreBoard`: leitura/validação de mapas e ondas e persistência ordenada do ranking top 5 em `assets/ranking.txt` (`ScoreEntry`). Colaboradores: `Map`, `Wave`, `GameException`, `FileFormatException`.
 
 ---
 

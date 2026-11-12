@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 
 #include <cstdio>
+#include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -329,6 +330,184 @@ TEST_CASE_FIXTURE(ShellTest, "an empty name is saved as anonimo") {
 TEST_CASE_FIXTURE(ShellTest, "setFrameDelay rejects a negative delay") {
     CHECK_THROWS_AS(shell.setFrameDelay(-1), std::invalid_argument);
     CHECK_NOTHROW(shell.setFrameDelay(100));
+}
+
+TEST_CASE_FIXTURE(ShellTest, "negative coordinates are rejected across defense commands") {
+    CHECK(shell.execute("install firewall -1 0"));
+    CHECK(contains(output, "fora do mapa"));
+    CHECK(game.getTowers().empty());
+    CHECK(game.getGold() == GameManager::INITIAL_GOLD);
+
+    output.str("");
+    CHECK(shell.execute("install firewall 0 -2"));
+    CHECK(contains(output, "fora do mapa"));
+    CHECK(game.getTowers().empty());
+
+    output.str("");
+    CHECK(shell.execute("upgrade -1 0"));
+    CHECK(contains(output, "não há defesa em (-1, 0)"));
+
+    output.str("");
+    CHECK(shell.execute("rm 0 -1"));
+    CHECK(contains(output, "não há defesa em (0, -1)"));
+
+    output.str("");
+    CHECK(shell.execute("target -2 -3 strong"));
+    CHECK(contains(output, "não há defesa em (-2, -3)"));
+}
+
+TEST_CASE_FIXTURE(ShellTest, "upgrade without enough CPU shows an error and keeps level") {
+    Cell cell = {2, 0};
+    REQUIRE(shell.execute("install firewall 2 0"));
+    REQUIRE(game.spendGold(game.getGold() - 20));
+    output.str("");
+
+    shell.execute("upgrade 2 0");
+
+    CHECK(contains(output, "CPU insuficiente"));
+    CHECK(game.getTowerAt(cell)->getLevel() == 1);
+    CHECK(game.getGold() == 20);
+}
+
+TEST_CASE_FIXTURE(ShellTest, "rm after upgrade refunds half of total invested CPU") {
+    Cell cell = {2, 0};
+    REQUIRE(shell.execute("install firewall 2 0"));
+    REQUIRE(shell.execute("upgrade 2 0"));
+    int goldBefore = game.getGold();
+    int expectedRefund = (50 + 37) / 2;
+    output.str("");
+
+    shell.execute("rm 2 0");
+
+    CHECK(game.getTowerAt(cell) == nullptr);
+    CHECK(game.getGold() == goldBefore + expectedRefund);
+    CHECK(contains(output, "CPU devolvida: 43"));
+}
+
+TEST_CASE_FIXTURE(ShellTest, "target rejects missing tower and accepts all four priorities") {
+    Cell cell = {2, 0};
+    shell.execute("target 2 0 first");
+    CHECK(contains(output, "não há defesa em (2, 0)"));
+
+    REQUIRE(shell.execute("install firewall 2 0"));
+    shell.execute("target 2 0 strong");
+    CHECK(game.getTowerAt(cell)->getTargetPriority() == TargetPriority::Strongest);
+    shell.execute("target 2 0 weak");
+    CHECK(game.getTowerAt(cell)->getTargetPriority() == TargetPriority::Weakest);
+    shell.execute("target 2 0 close");
+    CHECK(game.getTowerAt(cell)->getTargetPriority() == TargetPriority::Closest);
+    shell.execute("target 2 0 first");
+    CHECK(game.getTowerAt(cell)->getTargetPriority() == TargetPriority::First);
+}
+
+TEST_CASE_FIXTURE(ShellTest, "man covers defenses and malwares and bad arg counts show usage") {
+    shell.execute("man antivirus");
+    CHECK(contains(output, "Antivírus:"));
+    output.str("");
+    shell.execute("man scanner");
+    CHECK(contains(output, "Scanner:"));
+    output.str("");
+    shell.execute("man Antivirus");
+    CHECK(contains(output, "Custo: 100"));
+    output.str("");
+    shell.execute("man virus");
+    CHECK(contains(output, "Vírus:"));
+    output.str("");
+    shell.execute("man worm");
+    CHECK(contains(output, "Dano ao /root: 5"));
+
+    output.str("");
+    shell.execute("upgrade 2");
+    CHECK(contains(output, "uso: upgrade <x> <y>"));
+    output.str("");
+    shell.execute("target 2 0");
+    CHECK(contains(output, "uso: target <x> <y> <prioridade>"));
+    output.str("");
+    shell.execute("help extra");
+    CHECK(contains(output, "uso: help"));
+}
+
+TEST_CASE("run ends in defeat when root integrity reaches zero") {
+    std::remove(RANKING_PATH);
+    std::vector<SpawnGroup> groups;
+    groups.push_back(SpawnGroup{EnemyType::Rootkit, 4, 0.0f});
+    std::vector<Wave> lethalWaves(1, Wave(groups));
+
+    GameManager game(makeTestMap(), lethalWaves);
+    ScoreBoard scoreBoard(RANKING_PATH);
+    std::istringstream input("run\n  Admin;Com_Nome_Muito_Longo  \n");
+    std::ostringstream output;
+    Shell shell(game, scoreBoard, input, output);
+    shell.setFrameDelay(0);
+
+    shell.run();
+
+    CHECK(game.getState() == GameManager::GameState::Defeat);
+    CHECK(game.getRootIntegrity() == 0);
+    CHECK(contains(output, "Derrota! A integridade do /root chegou a 0."));
+    CHECK(contains(output, "Pontuação final: 0"));
+    REQUIRE(scoreBoard.getEntries().size() == 1);
+    CHECK(scoreBoard.getEntries()[0].name == "AdminCom_Nome_Muito_");
+    CHECK(scoreBoard.getEntries()[0].score == 0);
+    std::remove(RANKING_PATH);
+}
+
+TEST_CASE("defeat with full higher ranking skips name prompt") {
+    std::remove(RANKING_PATH);
+    std::vector<SpawnGroup> groups;
+    groups.push_back(SpawnGroup{EnemyType::Rootkit, 4, 0.0f});
+    std::vector<Wave> lethalWaves(1, Wave(groups));
+
+    GameManager game(makeTestMap(), lethalWaves);
+    ScoreBoard scoreBoard(RANKING_PATH);
+    for (int i = 1; i <= 5; ++i) {
+        ScoreEntry entry = {"top", i * 100, 1};
+        scoreBoard.addEntry(entry);
+    }
+    std::istringstream input("run\n");
+    std::ostringstream output;
+    Shell shell(game, scoreBoard, input, output);
+    shell.setFrameDelay(0);
+
+    shell.run();
+
+    CHECK(game.getState() == GameManager::GameState::Defeat);
+    CHECK(contains(output, "Derrota! A integridade do /root chegou a 0."));
+    CHECK(output.str().find("Digite seu nome:") == std::string::npos);
+    CHECK(scoreBoard.getEntries().size() == 5);
+    CHECK(scoreBoard.getEntries()[4].score == 100);
+    std::remove(RANKING_PATH);
+}
+
+TEST_CASE("run warns about ignored ranking lines and ranking save failure") {
+    std::remove(RANKING_PATH);
+    {
+        std::ofstream badRanking(RANKING_PATH);
+        badRanking << "200;2;alice\nlinha_corrompida\n;;;\n";
+    }
+    GameManager firstGame(makeTestMap(), makeTestWaves());
+    ScoreBoard loadedBoard(RANKING_PATH);
+    loadedBoard.load();
+    std::istringstream firstInput("exit\n");
+    std::ostringstream firstOutput;
+    Shell firstShell(firstGame, loadedBoard, firstInput, firstOutput);
+    firstShell.setFrameDelay(0);
+
+    firstShell.run();
+
+    CHECK(contains(firstOutput, "2 linha(s) corrompida(s) do ranking foram ignoradas"));
+    std::remove(RANKING_PATH);
+
+    GameManager secondGame(makeTestMap(), makeTestWaves());
+    ScoreBoard unwritableBoard("build/pasta_inexistente_shell/ranking.txt");
+    std::istringstream secondInput("run\nvitor\n");
+    std::ostringstream secondOutput;
+    Shell secondShell(secondGame, unwritableBoard, secondInput, secondOutput);
+    secondShell.setFrameDelay(0);
+
+    secondShell.run();
+
+    CHECK(contains(secondOutput, "aviso: o ranking não foi salvo:"));
 }
 
 } // TEST_SUITE("Shell")

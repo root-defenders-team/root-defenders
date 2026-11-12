@@ -143,13 +143,16 @@ TEST_CASE_FIXTURE(ShellTest, "install rejects an unknown type and a bad coordina
     CHECK(game.getGold() == GameManager::INITIAL_GOLD);
 }
 
-TEST_CASE_FIXTURE(ShellTest, "install without enough gold shows an error") {
-    REQUIRE(game.spendGold(game.getGold()));
+TEST_CASE_FIXTURE(ShellTest, "install without enough CPU shows the missing amount") {
+    REQUIRE(game.spendGold(GameManager::INITIAL_GOLD - 30));
 
-    shell.execute("install firewall 2 0");
+    shell.execute("install antivirus 2 0");
 
-    CHECK(contains(output, "CPU insuficiente"));
+    CHECK(output.str() ==
+          "erro: CPU insuficiente: a torre Antivírus custa 100 e você possui apenas 30; "
+          "faltam 70 CPU. Derrote malwares e avance para conseguir mais.\n");
     CHECK(game.getTowers().empty());
+    CHECK(game.getGold() == 30);
 }
 
 TEST_CASE_FIXTURE(ShellTest, "upgrade evolves the tower") {

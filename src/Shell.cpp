@@ -276,8 +276,10 @@ void Shell::handleInstall(const Command& command) {
 
     std::unique_ptr<Tower> tower = TowerFactory::create(type, cell);
     if (tower->getCost() > game.getGold()) {
-        output << "erro: CPU insuficiente: custa " << tower->getCost() << " e você tem "
-               << game.getGold() << '\n';
+        output << "erro: CPU insuficiente: a torre " << towerName(type) << " custa "
+               << tower->getCost() << " e você possui apenas " << game.getGold()
+               << "; faltam " << tower->getCost() - game.getGold()
+               << " CPU. Derrote malwares e avance para conseguir mais.\n";
         return;
     }
     if (!game.buildTower(std::move(tower))) {

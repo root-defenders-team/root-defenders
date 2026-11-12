@@ -138,3 +138,65 @@ malwares para testar minha estratégia até sobreviver ao ataque completo.
   vazio) e grava o ranking atualizado em `assets/ranking.txt`.
 - O ranking salvo permanece disponível em execuções futuras; eventuais falhas
   ao gravar o arquivo exibem um aviso sem encerrar o jogo abruptamente.
+
+---
+
+## 7. Remoção de defesas e reembolso de CPU (`rm`)
+
+**Como administrador**, quero desinstalar uma defesa posicionada em `(x, y)` para
+liberar a célula e recuperar metade da CPU investida ao adaptar minha defesa.
+
+### Critérios de aceitação
+
+- O jogador remove uma defesa instalada usando o comando `rm <x> <y>`.
+- O sistema reembolsa **50% de toda a CPU investida** na defesa (custo inicial
+  somado aos custos das evoluções já realizadas, em divisão inteira).
+- A célula antes ocupada volta a ficar livre (`.`) no mapa, permitindo instalar
+  uma nova defesa na mesma posição.
+- O Shell confirma a remoção informando a célula, a CPU devolvida e o saldo
+  atualizado de ciclos de CPU.
+- Tentar remover em célula sem defesa ou fora dos limites exibe
+  `erro: não há defesa em (x, y)` sem alterar o mapa nem a CPU.
+
+---
+
+## 8. Prioridade de seleção de alvo (`target`)
+
+**Como administrador**, quero configurar o critério de mira de cada defesa para
+direcionar seus ataques aos malwares mais críticos em cada onda.
+
+### Critérios de aceitação
+
+- O jogador altera a prioridade de uma defesa instalada com o comando
+  `target <x> <y> <prioridade>`.
+- São aceitas quatro prioridades:
+  - `first`: ataca o malware mais avançado no caminho (padrão inicial de toda
+    nova defesa).
+  - `strong`: ataca o malware com maior vida atual dentro do alcance.
+  - `weak`: ataca o malware com menor vida atual dentro do alcance.
+  - `close`: ataca o malware mais próximo da defesa em distância euclidiana.
+- Prioridades inválidas disparam `InvalidCommandException`, exibindo mensagem de
+  erro com as opções válidas e preservando a prioridade anterior da defesa.
+- Informar coordenadas sem defesa instalada exibe `erro: não há defesa em (x, y)`.
+
+---
+
+## 9. Manual técnico e listagem de defesas (`man` e `ls`)
+
+**Como administrador**, quero consultar os atributos das defesas e malwares no
+próprio jogo e listar minhas defesas ativas com custos de evolução e reembolso
+para tomar decisões sem sair do terminal.
+
+### Critérios de aceitação
+
+- O comando `man <nome>` exibe descrição resumida e ficha técnica de qualquer
+  defesa (`firewall`, `antivirus`, `scanner`, aceitando inicial maiúscula) com
+  custo, alcance, dano e intervalo, ou de qualquer malware (`virus`, `worm`,
+  `rootkit`) com vida, velocidade, recompensa em CPU e dano ao `/root`.
+- Consultar um nome desconhecido no `man` exibe `erro: não há manual para <nome>`.
+- O comando `ls` lista todas as defesas instaladas mostrando coordenadas
+  `(x, y)`, símbolo (`F`, `A`, `S`), nível, alcance, dano, intervalo,
+  prioridade de alvo, custo da próxima evolução (`<valor> CPU` ou `MAX` no
+  nível 3) e valor de reembolso em CPU.
+- Quando nenhuma defesa estiver instalada, `ls` informa
+  `Nenhuma defesa instalada.`.

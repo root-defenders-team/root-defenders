@@ -258,6 +258,14 @@ TEST_CASE_FIXTURE(ShellTest, "help, ls, man and ranking print information") {
     CHECK(contains(output, "Legenda:"));
 }
 
+TEST_CASE_FIXTURE(ShellTest, "man accepts a malware name with only its first letter capitalized") {
+    CHECK(shell.execute("man Rootkit"));
+
+    CHECK(contains(output, "Rootkit"));
+    CHECK(contains(output, "Vida"));
+    CHECK_FALSE(contains(output, "erro:"));
+}
+
 TEST_CASE_FIXTURE(ShellTest, "run plays the whole wave") {
     CHECK(shell.execute("run"));
 

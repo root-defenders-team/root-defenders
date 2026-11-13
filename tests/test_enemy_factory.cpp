@@ -14,9 +14,15 @@ TEST_CASE("parses supported enemy names") {
     CHECK(EnemyFactory::parseType("rootkit") == EnemyType::Rootkit);
 }
 
+TEST_CASE("parses enemy names with only the first letter capitalized") {
+    CHECK(EnemyFactory::parseType("Virus") == EnemyType::Virus);
+    CHECK(EnemyFactory::parseType("Worm") == EnemyType::Worm);
+    CHECK(EnemyFactory::parseType("Rootkit") == EnemyType::Rootkit);
+}
+
 TEST_CASE("rejects unknown enemy names") {
     CHECK_THROWS_AS(EnemyFactory::parseType("unknown"), std::invalid_argument);
-    CHECK_THROWS_AS(EnemyFactory::parseType("Virus"), std::invalid_argument);
+    CHECK_THROWS_AS(EnemyFactory::parseType("VIRUS"), std::invalid_argument);
     CHECK_THROWS_AS(EnemyFactory::parseType(""), std::invalid_argument);
 }
 

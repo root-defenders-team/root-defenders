@@ -53,12 +53,12 @@ bool isGameOver(const GameManager& game) {
 /// Nome de cada defesa como aparece nas mensagens.
 std::string towerName(TowerType type) {
     switch (type) {
-    case TowerType::Firewall:
-        return "Firewall";
-    case TowerType::Antivirus:
-        return "Antivírus";
-    case TowerType::Scanner:
-        return "Scanner";
+        case TowerType::Firewall:
+            return "Firewall";
+        case TowerType::Antivirus:
+            return "Antivírus";
+        case TowerType::Scanner:
+            return "Scanner";
     }
     return "Defesa";
 }
@@ -66,12 +66,12 @@ std::string towerName(TowerType type) {
 /// Descrição de cada defesa para o comando man.
 std::string towerDescription(TowerType type) {
     switch (type) {
-    case TowerType::Firewall:
-        return "disparos rápidos e fracos, de alcance curto.";
-    case TowerType::Antivirus:
-        return "disparos fortes e lentos, de alcance longo.";
-    case TowerType::Scanner:
-        return "causa dano em todos os malwares ao redor, sem projétil.";
+        case TowerType::Firewall:
+            return "disparos rápidos e fracos, de alcance curto.";
+        case TowerType::Antivirus:
+            return "disparos fortes e lentos, de alcance longo.";
+        case TowerType::Scanner:
+            return "causa dano em todos os malwares ao redor, sem projétil.";
     }
     return "";
 }
@@ -79,12 +79,12 @@ std::string towerDescription(TowerType type) {
 /// Nome de cada malware como aparece nas mensagens.
 std::string enemyName(EnemyType type) {
     switch (type) {
-    case EnemyType::Virus:
-        return "Vírus";
-    case EnemyType::Worm:
-        return "Worm";
-    case EnemyType::Rootkit:
-        return "Rootkit";
+        case EnemyType::Virus:
+            return "Vírus";
+        case EnemyType::Worm:
+            return "Worm";
+        case EnemyType::Rootkit:
+            return "Rootkit";
     }
     return "Malware";
 }
@@ -92,12 +92,12 @@ std::string enemyName(EnemyType type) {
 /// Descrição de cada malware para o comando man.
 std::string enemyDescription(EnemyType type) {
     switch (type) {
-    case EnemyType::Virus:
-        return "equilibrado em vida e velocidade.";
-    case EnemyType::Worm:
-        return "muito rápido e frágil.";
-    case EnemyType::Rootkit:
-        return "lento e resistente; a blindagem tira 3 de cada golpe (mínimo 1).";
+        case EnemyType::Virus:
+            return "equilibrado em vida e velocidade.";
+        case EnemyType::Worm:
+            return "muito rápido e frágil.";
+        case EnemyType::Rootkit:
+            return "lento e resistente; a blindagem tira 3 de cada golpe (mínimo 1).";
     }
     return "";
 }

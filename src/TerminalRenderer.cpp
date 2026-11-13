@@ -147,7 +147,8 @@ void TerminalRenderer::drawFrame(const GameManager& game, std::ostream& out) con
             << RESET_COLOR << "\n";
     } else {
         out << "Legenda: E entrada | @ /root | # caminho | X obstáculo | . livre | * projétil\n"
-            << "Defesas: F firewall, A antivírus, S scanner | Malwares: v vírus, w worm, r rootkit\n";
+            << "Defesas: F firewall, A antivírus, S scanner | "
+            << "Malwares: v vírus, w worm, r rootkit\n";
     }
 }
 

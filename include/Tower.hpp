@@ -32,6 +32,9 @@ public:
      */
     Tower(const Cell& cell, float range, float damage, float fireInterval, int cost);
 
+    /**
+     * @brief Destrutor virtual para destruir corretamente as torres derivadas.
+     */
     virtual ~Tower() = default;
 
     /**

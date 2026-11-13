@@ -104,7 +104,8 @@ TEST_CASE_FIXTURE(ShellTest, "install builds a tower and charges its cost") {
     CHECK(contains(output, "instalado em (2, 0)"));
 }
 
-TEST_CASE_FIXTURE(ShellTest, "install accepts a defense name with only its first letter capitalized") {
+TEST_CASE_FIXTURE(ShellTest,
+                  "install accepts a defense name with only its first letter capitalized") {
     Cell cell = {2, 0};
 
     CHECK(shell.execute("install Firewall 2 0"));

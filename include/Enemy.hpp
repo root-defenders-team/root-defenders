@@ -28,6 +28,9 @@ public:
     Enemy(const std::vector<Vector2>& path, float maxHp, float speed,
           int reward, int damageToRoot);
 
+    /**
+     * @brief Destrutor virtual para destruir corretamente os inimigos derivados.
+     */
     virtual ~Enemy() = default;
 
     /**
